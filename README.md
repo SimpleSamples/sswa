@@ -1,1 +1,1 @@
-# sswa
+For my website simplesamples.info.
