@@ -1,0 +1,55 @@
+@page
+@model sswa.Areas.MFC.Pages.EventsModel
+@{
+	ViewData["Title"] = "Events";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The documentation of the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CEvent.asp>CEvent</a>
+is not as clear as it could be. The following is an outline for one possible use of it.
+This example could be used in a class that creates a thread, such as a worker thread
+created by AfxBeginThread, to signal it is time for the thread to complete</p>
+
+<p>In the class, create a pointer to an event item and to a thread and declare the thread
+procedure:</p>
+
+<pre><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CEvent.asp>CEvent</a> *m_pEvent;
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinThread.asp>CWinThread</a> *m_pThread;
+static UINT ThreadProc(CFileMonitorApp *);</pre>
+
+<p>In the constructor, initialize them:</p>
+
+<pre>m_pEvent = NULL;
+m_pThread = NULL;</pre>
+
+<p>Then create the event item and the thread:</p>
+
+<pre>m_pEvent = new CEvent;
+if (!m_pEvent)
+    return false;
+m_pEvent-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CEvent.3a3a.ResetEvent.asp>ResetEvent</a>();        // Not necessary?
+m_pThread = <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_AfxBeginThread.asp>AfxBeginThread</a>((AFX_THREADPROC)ThreadProc, (LPVOID)this);
+if (!m_pThread)
+    return false;</pre>
+
+<p>The thread then waits for it to happen. You might need to specify a
+time-out interval shorter than INFINITE. Alternatively, you can use a
+time-out interval of zero and periodically check to see if it is time: It is
+usually important to check the WaitForSingleObject Return Value.</p>
+
+<pre>UINT CEventApp::ThreadProc(CFileMonitorApp *pApp) {
+	DWORD ReturnValue;
+ReturnValue = <a
+href="http://msdn.microsoft.com/library/psdk/winbase/synchro_4ldg.htm">WaitForSingleObject</a>(pApp-&gt;m_pEvent-&gt;m_hObject, INFINITE);
+return 0;
+}</pre>
+
+<p>When it is time for the thread to end:</p>
+
+<pre>m_pEvent-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CEvent.3a3a.SetEvent.asp>SetEvent</a>();
+ReturnValue = <a
+href="http://msdn.microsoft.com/library/psdk/winbase/synchro_4ldg.htm">WaitForSingleObject</a>(m_pThread-&gt;m_hThread, INFINITE);
+delete m_pEvent;</pre>

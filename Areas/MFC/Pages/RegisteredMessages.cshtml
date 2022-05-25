@@ -1,0 +1,41 @@
+@page
+@model sswa.Areas.MFC.Pages.RegisteredMessagesModel
+@{
+	ViewData["Title"] = "Using Registered Message Ids";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>To use a registered message id, at the beginning of every cpp file that will
+need the registered message id, such as the CMainFrame-derived class put:</p>
+
+<pre>static UINT NEAR WM_YOURWHATEVERCALLBACKMESSAGE =
+		<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_10h1.asp>RegisterWindowMessage</a>(&quot;YourWhateverCallbackMessage&quot;);</pre>
+<p>Then you can use WM_YOURWHATEVERCALLBACKMESSAGE for a message id. The name
+WM_YOURWHATEVERCALLBACKMESSAGE can be whatever name you want, of course.
+To process the message, create a message map as in the following:</p>
+
+<pre>BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
+    //{{AFX_MSG_MAP(CMainFrame)
+    //}}AFX_MSG_MAP
+    <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_ON_REGISTERED_MESSAGE.asp>ON_REGISTERED_MESSAGE</a>(WM_YOURWHATEVERCALLBACKMESSAGE, OnWhateverCallbackMessage)
+END_MESSAGE_MAP()</pre>
+
+<p>The following is a sample function for processing the message; it is just the
+basics:</p>
+
+<pre>afx_msg LRESULT CMainFrame::OnWhateverCallbackMessage(WPARAM wParam, LPARAM lParam) {
+return 0;
+}</pre>
+
+<h2>References</h2>
+<p>The following also describe registered messages:</p>
+<ul>
+  <li>In the CodeGuru articles is <a href="http://www.codeguru.com/misc/userdef_message_map_entry.shtml">HOWTO:
+    MFC user defined message maps</a> and <a href="http://www.codeguru.com/misc/registering_windows_msgs.shtml">Registered
+    Messages vs. WM_USER</a></li>
+  <li>Joe Newcomer's essay on <a href="http://www.pgh.net/~newcomer/mvp_tips.htm">Message
+    Management</a></li>
+</ul>

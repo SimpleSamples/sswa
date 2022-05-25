@@ -1,0 +1,25 @@
+﻿@page
+@model sswa.Areas.Windows.Pages.End_of_Line_Model
+@{
+	ViewData["Title"] = "End of Line Characters";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The C language and the Unix operating system were designed in parallel. For 
+those two environments, an end of line is indicated by a new line character, 
+also known as a line feed character and also known by the escape sequence '\n'. 
+However the line feed character for devices such as printers and dumb terminals 
+just move the print head or cursor down vertically. The carriage return 
+character, also known as the enter key and also known by the escape sequence 
+'\r', moves the print head or cursor horizontally to the beginning of the line.</p>
+<p>Therefore to get a new line in such devices requires both a carriage return and 
+a line feed. Therefore Unix's use of just a '\n' is inconsistent with the way 
+most other devices use the character. Most printers have an option to convert 
+just a '\n' to a '\r' and a '\n' but it is a special conversion.</p>
+<p>It can be confusing to remember when to use just a '\n' and when to use both a 
+'\r' and a '\n' but just remember that for C and C++ language functions in text 
+mode, probably only a '\n' is necessary. For most Windows functions, both a '\r' 
+and a '\n' (such as a &quot;\r\n&quot;) are required.</p>

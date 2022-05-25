@@ -1,0 +1,167 @@
+@page
+@model sswa.Areas.CPlusPlus.Pages.CreatingStaticLibraryModel
+@{
+	ViewData["Title"] = "Creating a Static Library";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article shows creation of a static library using Visual Studio. This 
+article assumes you are familiar with the use of Visual Studio including 
+creation of projects. The sample projects in this article were created using 
+Visual Studio 2010.</p>
+<p>A static library consists of object files. Object files are the output of 
+compilers of unmanaged code and consist of functions that can only be used 
+by unmanaged code. A static library is linked with the code that uses 
+(calls) it by the link editor. If you are not familiar with link editors 
+then the concept and purposes of link editors probably seem strange to you. 
+The important thing is that a static library is combined with the other code 
+such that everything is put into one executable file. A static library can 
+be used by multiple programs and when it is, it is copied into every 
+executable file it is used in. A static library cannot be used by managed 
+(.Net) code directly therefore they are useless for most C# programmers.</p>
+<p>One practical use of a static library is to split a very large <strong>
+unmanaged</strong> project into two or more smaller projects. If that is 
+done then the static library is likely used in just the one project and the 
+static library project would probably be created after the project that uses 
+it. The static library might be tested using the project that uses it or 
+another project could be created just for testing purposes.</p>
+<p>Another practical use of a static library is as a general-purpose library 
+used by multiple <strong>unmanaged</strong> applications. It would then 
+likely exist in a project created for it and a test application would be 
+created for it. In this article, I am creating a static library as if it 
+will be a general-purpose library used by multiple applications. Therefore 
+we will begin by creating the project for the static library, then we will 
+create a console application to test it. The console application will show 
+the details of how to use a static library. It is possible to create a 
+static library that can be called by non-managed languages other than C++ 
+but if that is to be done then the functions must be linked with "C" linkage 
+as described in this article.</p>
+<p>Static libraries are not defined by the C++ language; they are a Windows 
+thing. Most C++ compilers produce object files as output but only the link 
+editor accesses library files (that contain object files). Each link editor implements static libraries differently, or 
+might not implement them at all. Since static libraries are supported by 
+Windows but not by the C++ compiler, to create&nbsp; a static library 
+project, we must create a Win32 project.</p>
+<p>To create the static library project, start by creating a "Win32 
+Project". When you do, the first Wizard page will be the "Welcome to the 
+Win32 Application Wizard" as in the following:</p>
+<p><a href="~/images/WizardWelcome2.jpg">
+	<img alt="&quot;Welcome to the Win32 Application Wizard&quot; window"
+	height="339" width="400" src="~/images/WizardWelcome2.jpg"></a></p>
+<p>The next wizard page is for the "Applications Settings". Change the "Application 
+type" radio button to "Static library". Leave the others with default 
+values. <strong>You can leave the "Precompiled header" option on.</strong>&nbsp; 
+The "Applications Settings" window will look like:</p>
+<p><a href="~/images/WizardSettings.jpg">
+<img alt="&quot;Applications Settings&quot; window" height="339" width="400" 
+	src="~/images/WizardSettings.jpg"></a></p>
+<p>When you have created the project, the only source code files generated for 
+the project will be stdafx.h, stdafx.cpp and targetver.h. We will not change 
+them. We do however need to add a header (StaticLibrarySample.<strong>h</strong>) 
+and implementation (StaticLibrarySample.<strong>cpp</strong>) file. In the 
+Solution Explorer, right-click on the project and select "Add" | "New 
+Item...". Then select "Header File (.h)" as in:</p>
+<p><a href="~/images/AddHeader.jpg">
+<img alt="Add New Item window for header" height="276" width="400"
+	src="~/images/AddHeader.jpg"></a></p>
+<p>Be sure to give the file a name. Then do the same to create a cpp file 
+(C++ File (.cpp)), as in:</p>
+<p><a href="~/images/AddImplementation.jpg"> 
+<img alt="Add New Item window for implementation" width="400" height="276"
+	src="~/images/AddImplementation.jpg"></a></p>
+<p>For most programs, you would add #includes to the stdafx.h file but 
+the details of that are outside the scope of this article.</p>
+<p>In the project that was generated, there will be a header 
+(StaticLibrarySample.<strong>h</strong>) and implementation 
+(StaticLibrarySample.<strong>cpp</strong>) file. Modify the header to be as:</p>
+<blockquote>
+	<pre>#pragma once
+extern "C" {
+int Test(int a, int b);
+}</pre>
+</blockquote>
+<p>Note that the extern "C" makes the function callable by C and by other 
+languages as well. The disadvantage of extern "C" is that it prevents use of 
+classes and other C++ features with any functions exposed for use by callers 
+of the static library. Modify the implementation file to be:</p>
+<blockquote>
+	<pre>#include "stdafx.h"
+#include "StaticLibrarySample.h"
+extern "C" {
+int Test(int a, int b) {
+return a + b;
+}
+}
+</pre>
+</blockquote>
+<p>You can now the build the project. The build will look something as:</p>
+<pre>1&gt;------ Build started: Project: StaticLibrarySample, Configuration: Debug Win32 ------
+1&gt;  stdafx.cpp
+1&gt;  StaticLibrarySample.cpp
+1&gt;  StaticLibrarySample.vcxproj -&gt; C:\Users\Sam\Documents\Visual Studio 2010\Projects\
+C-SharpCorner Articles\StaticLibrarySample\Debug\StaticLibrarySample.lib
+========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========</pre>
+<h2>Using the Static Library</h2>
+<p>To create the test application, go to the Solution Explorer and 
+right-click on the Solution. Select "Add" | "New Project...". Create a 
+Visual C++ Win32 Console Application. In the Application Settings window, 
+keep the defaults; we do <strong>not</strong> want an <strong>empty</strong> 
+project and we <strong>do</strong> want <strong>pre-compiled headers</strong>. 
+The "Add New Project" window will look something as:</p>
+<p><a href="~/images/NewProjectTest.jpg">
+<img alt="&quot;Add New Project&quot; window" height="276" width="400" 
+	src="~/images/NewProjectTest.jpg"></a></p>
+<p>When the project has been generated, set it as the Startup project.</p>
+<p>We need to add the include directory to the project. Go to the Solution 
+Explorer and right-click on the test project, then select "Properties". In 
+the left side, under "Configuration properties" expand the "C/C++" node, 
+then select "General". In the top-right is "Configuration"; change it to 
+"All Configurations". Then in "Additional Include Directories" add the 
+directory of the static library project where the static library's header 
+(StaticLibrarySample.h) is at. The "Project Properties" window will look 
+something like:</p>
+<p><a href="~/images/IncludeDirectory.jpg">
+<img alt="&quot;Project Properties&quot; window" height="283" width="400"  
+	src="~/images/IncludeDirectory.jpg"></a></p>
+<p>Next we need to specify the library to be used. In the project 
+properties, and with the configuration set for All Configurations, go to the 
+"Input" node of the "Linker" properties. In the "Additional Dependencies" 
+add the name of the static library; just the filename and extension, but not 
+the directory. The properties window will look something like:</p>
+<p><a href="~/images/Library.jpg">
+<img alt="&quot;Project Properties&quot; window" height="283" width="400"
+	src="~/images/Library.jpg"></a></p>
+<p>If you click in the box for entering the Additional Dependencies then you 
+will see an arrow at the right of that. Click the arrow and select 
+"&lt;Edit...&gt;". You will then get a dialog for editing the dependencies that 
+looks like:</p>
+<p><img alt="Additional Dependencies" src="~/images/LibraryDependency.jpg"
+	height="368" width="425"></p>
+<p>Next we need to specify the directory of the library. That is done in the 
+project properties, but this time we will specify different directories for 
+each configuration. So with the configuration set for "Active(Debug)", go to 
+the "General" node of the "Linker" properties. Specify the directory where 
+the Debug configuraton of the library is at. The property page will look 
+something like:</p>
+<p><a href="~/images/LibraryDirectory.jpg">
+<img alt="Library directory" height="283" width="400" 
+	src="~/images/LibraryDirectory.jpg"></a></p>
+<p>Do the same for the Release configuration; note that the directory name 
+is different for debug and release configurations.</p>
+<p>Then in the test program's cpp file, after the include for "stdafx.h", 
+add an #include for "StaticLibrarySample.h". Then in the main function, add 
+the line:</p>
+<pre>_tprintf(_T("%d"), Test(1, 9));</pre>
+<p>One more thing worth doing is to ensure that the solution knows that the 
+test project depends on the static library. Go to the Solution Explorer 
+again but right-click on the <strong>Solution</strong> then choose 
+Properties. Then in the left side click on "Project Dependencies" under the 
+"Common Properties" node. Ensure that the test project has the checkbox 
+checked for the static library. That property page looks like:</p>
+<p><a href="~/images/ProjectDependency.jpg">
+<img alt="Project dependency" height="251" width="400"
+	src="~/images/ProjectDependency.jpg"></a></p>
+<p>Build and test the program.</p>

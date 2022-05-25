@@ -1,0 +1,156 @@
+@page
+@model sswa.Areas.CSharp.Pages.ClickingAButtonInAnotherApplicationModel
+@{
+	ViewData["Title"] = "Clicking a Button in Another Application";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p><a href="ButtonClicking.zip">ButtonClicking.zip</a></p>
+<p><span class="auto-style1"><strong>Update:</strong></span> For Windows 10 
+(and I assume Windows 8 and above) the Windows Calculator Accessory cannot 
+be used for this. See the modification of the attached sample code necessary 
+for the Windows Character Map Accessory for the ButtonId and fn.</p>
+<p>This article provides a simple sample of an application that clicks a 
+button in another application. The technique could be used for other 
+controls too. For the purpose of a simple sample the program is a console 
+program. The sample will click the "=" button in the Windows Calculator 
+Accessory or can click the "Select" button for the Windows Character Map 
+Accessory.</p>
+<p>This article was originally written using Windows 7 but the Windows Calculator Accessory in 
+Windows 10 (and I assume Windows 8 and above) cannot be used in the manner it is used here.</p>
+<p>The first thing to do is to determine what button to click and the 
+circumstances of when to click it. Execute the Windows Calculator Accessory 
+or Windows Character Map Accessory.</p>
+<p>For the Windows Calculator Accessory type "2+2=" into it. The result should be 4 of course. Then click the "=" 
+button. Each time "=" is clicked, the value will be increased by 2. So that 
+is something very simple to automate. We can "manually" execute Calculator 
+and type "2+2=" into it. Then when we execute our sample application it can 
+just click the "=" button and we can see the result.</p>
+<p>For the Windows Character Map Accessory, we just need to execute it. 
+When the "Select" button is clicked the character is put into the selected 
+box. We can move to a different character using the mouse or keyboard. We can 
+see that the "Select" button is clicked because the specified character is 
+put into the selected box. </p>
+<p>The next thing to do is to determine the identity of the button to be 
+clicked so our program can click it. With the accessory 
+executing, go to Visual Studio. In the "Tools" menu is "Spy++". If your 
+system is a 64-bit system then you need to use the 64-bit version of Spy++. 
+The Spy++ toolbar will look like:</p>
+<p>
+<img alt="Spy++ toolbar" height="35" src="../images/Spytoolbar.jpg" width="259"></p>
+<p>Click on the "Find Window" icon; it is a binoculars with a window in the 
+top-left; it looks like:
+<img alt="&quot;Find Window&quot; icon" height="23" src="../images/FinderToolIcon.jpg" width="23"></p>
+<p>That will open a "Find Window" dialog. Now first, ensure that the 
+accessory is visible; at least the relevant button part of it. Then click on the "Finder 
+Tool" icon (the square with a circle in it that looks like a target). The 
+"Find Window" dialog looks like:</p>
+<p><img alt="&quot;Find Window&quot; dialog" height="301" src="../images/FindWindow.jpg" width="327"></p>
+<p>With the mouse button down, drag from the Finder Tool icon to the "=" 
+button and release the mouse. The Find Window dialog will be filled in with 
+the button's handle and other data. Click on "OK". You will then get a 
+"Window Properties" window with a tab control with 5 tabs. The five tabs are 
+General, Styles, Windows, Class and Process. The wndow will look like:</p>
+<p>
+<img alt="&quot;Window Properties&quot; window" height="298" src="../images/WindowProperties.jpg" width="396"></p>
+<p>Look for "Control ID" near the botom of the first (General) tab. It will 
+probably have the value "00000079" for the Windows Calculator Accessory or 
+"00000067" for the Windows Character Map Accessory. It is a hexadecimal value. Whatever the 
+value is, it will probably be that value every timne you execute that 
+program. At the Windows API level, controls are often identified by a 
+control id. We can use the Control ID shown in the Window Properties window 
+in our program.</p>
+<p>We are ready to write the application. I assume you can create a console 
+application. If your system is 64-bit then you will need to change the 
+"Platform Target" to "x64". The .Net Process class cannot do everything we 
+need it to do when our application is not the same as the other application 
+in terms of bits (32-bits and 64-bits). The "Platform Target" property is in 
+the Build tab of the project's properties. If you need to automate a 32-bit 
+application from a 64-bit application or 64-bit from 32-bit then you can do 
+that but you will need to use the Windows API directly to do the equivalent 
+of what we are using the .Net Process class to do.</p>
+<p>You need to add a "using" for the "System.Diagnostics" and 
+"System.Runtime.InteropServices" namespaces. You will also need to add the 
+following to the "Program" class:</p>
+<pre>const int WM_COMMAND = 0x0111;
+const int BN_CLICKED = 0;
+const int ButtonId = 0x79;
+const string fn = @@"C:\Windows\system32\calc.exe";
+
+[DllImport("user32.dll")]
+static extern IntPtr GetDlgItem(IntPtr hWnd, int nIDDlgItem);
+
+[DllImport("user32.dll")]
+static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);</pre>
+	<p>For the Windows Character Map Accessory use the following for the ButtonId 
+	and fn:</p>
+	<pre> const int ButtonId = 0x67;
+const string fn = @@"C:\Windows\system32\charmap.exe";</pre>
+<p>The sample program will first look at the processes to find Calculator. 
+We will assume the exe is at:</p>
+<pre>C:\Windows\system32\calc.exe</pre>
+<p>The Windows Character Map Accessory is at:</p>
+<pre>C:\Windows\system32\charmap.exe</pre>
+<p>When we find a process that is executed from there, we know for sure it 
+is the one we are looking for. Note that there are very many processes in a 
+system; many more than most people are aware of. Each Windows Service is a 
+process. Windows Services and other processes that we need to ignore do not 
+have a window, so we can ignore all processes without a window. The 
+following code will do all that:</p>
+<pre>IntPtr handle = IntPtr.Zero;
+Process[] localAll = Process.GetProcesses();
+foreach (Process p in localAll)
+{
+if (p.MainWindowHandle != IntPtr.Zero)
+{
+ProcessModule pm = GetModule(p);
+if (pm != null &amp;&amp; p.MainModule.FileName == fn)
+handle = p.MainWindowHandle;
+}
+}
+if (handle == IntPtr.Zero)
+{
+Console.WriteLine("Not found");
+return;
+}</pre>
+<p>The GetModule function is shown later in this article.</p>
+<p>We are ready to click the button from within our application. To click 
+the button we will send a BN_CLICKED notification message to the button's
+<strong>parent</strong>, the Calculator <strong>main</strong> window. To do 
+that we will need both the button id (as in the preceding) and the handle of 
+the button. The handle varies for each execution but we can determine the 
+handle based on the handle of its parent and the control id. The Windows API 
+function GetDlgItem does that, as in:</p>
+<blockquote><pre>IntPtr hWndButton = GetDlgItem(handle, ButtonId);</pre></blockquote>
+<p>Windows messages are sent to a window as determined by the window handle. 
+Messages also have a message id that specifies what the message is for. We 
+will send a WM_COMMAND message. The other two parameters we need to send the 
+message is a wParam and a lParam. The value of those depend on what the 
+message is (the message id). For a WM_COMMAND message doing what we are 
+doing, the control id is passed as the high word of wParam and the low word 
+of wParam is the notification code (BN_CLICKED). The lParam is the handle of 
+the control. It seems unnecessary to pass both the control id and the 
+control window's handle but that is the way it works. The following sends 
+the message:</p>
+<blockquote><pre>int wParam = (BN_CLICKED &lt;&lt; 16) | (ButtonId &amp; 0xffff);
+SendMessage(handle, WM_COMMAND, wParam, hWndButton);</pre></blockquote>
+<p>When the processes are being searched, since some modules might be 
+restricted from access for security purposes, we catch errors using the 
+GetModule function. It is very simple, as in the following:</p>
+<blockquote><pre>private static ProcessModule GetModule(Process p)
+{
+	ProcessModule pm = null;
+	try { pm = p.MainModule; }
+	catch
+	{
+		return null;
+	}
+	return pm;
+}
+</pre></blockquote>
+<p>To test the program, first execute Calculator and type in "2+2=". <strong>Then</strong> execute 
+the sample program. Every time it executes, 2 will be added to the 
+Calculator value.</p>

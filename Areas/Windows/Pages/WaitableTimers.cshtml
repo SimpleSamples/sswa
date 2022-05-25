@@ -1,0 +1,39 @@
+@page
+@model sswa.Areas.Windows.Pages.WaitableTimersModel
+@{
+	ViewData["Title"] = "Using Waitable Timers";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following should be a reasonable alternative to use of Sleep().</p>
+<pre>#define STRICT 1
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINDOWS 0x0500 // Not supported by 95
+#include &lt;windows.h&gt;
+
+DWORD Wait(DWORD MilliSeconds) {
+	DWORD dw;
+	HANDLE hTimer;
+	LARGE_INTEGER DueTime;
+	LONGLONG MilliSecond=-10000;
+if (_winmajor == 1 &amp;&amp; _winminor &lt;= 4)	// Win95 or less?
+	return WAIT_FAILED;		// This is not best since WAIT_FAILED implies
+		// that GetLastError will say what the problem is
+DueTime.QuadPart = MilliSeconds * MilliSecond;
+hTimer = CreateWaitableTimer(NULL, TRUE, NULL);
+if (!SetWaitableTimer(hTimer, &amp;DueTime, 0, NULL, NULL, FALSE)) {
+	CloseHandle(hTimer);
+	return WAIT_FAILED; // This needs to be improved
+	// A more meaningful return value should be retuned; A BOOL
+	// return value would be good and upon failure the caller could
+	// call GetLastError
+	}
+dw = WaitForSingleObject(hTimer, 10000);	// A maximum of 10 seconds?
+				// Adjust if necessary
+CloseHandle(hTimer);
+return dw;
+}
+</pre>

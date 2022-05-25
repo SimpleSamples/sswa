@@ -1,0 +1,79 @@
+@page
+@model sswa.Areas.Windows.Pages.ShellDocumentViewModel
+@{
+	ViewData["Title"] = "The Shell Document Object and Control Library";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article describes the "Shell Doc Object and Control Library" 
+("SHDocVw.dll"). The library contains the user interface (documents) 
+portions of both Internet Explorer and the file system. In this context, the 
+file system is the Windows Explorer accessory that you use to look at 
+Windows folders and files. The "SHDocVw.dll" library is a COM object, it is 
+not managed.</p>
+<p>The executable file for Internet Explorer is IExplore.exe. It uses 
+"SHDocVw.dll" which uses Mshtml.dll and other Active Document components. 
+Mshtml.dll is the library for HTML. The "SHDocVw.dll" library is also known 
+as the WebBrowser Control, however it is the COM (unmanaged) version. The 
+.Net (managed) WebBrowser Control is a wrapper of the COM version.</p>
+<p>For Internet Explorer, the two most common uses of the library are:</p>
+<ul>
+	<li>Enumerate the open Internet Explorer browser windows</li>
+	<li>Create a new instance of an Internet Explorer browser window outside 
+	of our program</li>
+</ul>
+<p>The open Internet Explorer browser windows can be enumerated using the 
+ShellWindows member. The items in the collection are InternetExplorer 
+objects. Most InternetExplorer objects are Internet Explorer browser windows 
+but some InternetExplorer objects are "Windows Explorer" (the application 
+for looking at files and folders) windows.</p>
+<p>The InternetExplorer object can also be used to open a new instance of an 
+Internet Explorer browser window. We shall try doing that first. Before we 
+do, we must add a reference to "SHDocVw.dll". I will assume you know how to 
+create projects in Visual Studio and how to add references. Create a project 
+or use an existing project. In the "Reference Manager" window go to the 
+"COM" libraries as in the following:</p>
+<p><a href="~/images/ReferenceManager.jpg">
+	<img alt="Reference Manager" height="275" width="400" src="~/images/ReferenceManager.jpg"
+	longdesc="Reference Manager window in Visual studio"></a></p>
+<p>Then click on the "Browse" button and browse to your "\Windows\System32" 
+folder and select "SHDocVw.dll" as in the following:</p>
+<p><a href="~/images/System32Folder.jpg">
+	<img alt="sys32 folder" height="212" width="400"
+	src="~/images/System32Folder.jpg"></a></p>
+<p>Be sure to place a checkmark next to the library, then click on "OK".</p>
+<p>Next use the following code to create an Internet Explorer browser 
+window:</p>
+<pre>SHDocVw.InternetExplorer ie = new SHDocVw.InternetExplorer();
+ie.Visible = true;
+ie.Navigate("http://microsoft.com");</pre>
+<p>The open Internet Explorer browser windows can be enumerated as easily 
+as:</p>
+<pre>SHDocVw.ShellWindows ShellWindows = new SHDocVw.ShellWindows();
+foreach (Object o in ShellWindows)
+{
+	SHDocVw.InternetExplorer ie = o as SHDocVw.InternetExplorer;
+	if (ie != null)
+	{
+		try
+		{
+		if (ie.Document.GetType().Name == "HTMLDocumentClass")
+			// it is an Internet Explorer browser window
+		}
+		catch (Exception ex)
+		{
+			// handle error
+		}
+	}
+}</pre>
+<p>Note that if you have web sites in multiple tabs within an Internet 
+Explorer window then each tab will be a separate InternetExplorer object.</p>
+<p>When enumerating or creating new browser windows this way, it is possible 
+to control them, at least somewhat. We will explore what we can do in future 
+articles.</p>
+<h2>References</h2>
+<p><a href="http://msdn.microsoft.com/en-us/library/aa741313(v=vs.85).aspx">
+About the Browser</a></p>

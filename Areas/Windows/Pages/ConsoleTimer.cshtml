@@ -1,0 +1,47 @@
+@page
+@model sswa.Areas.Windows.Pages.ConsoleTimerModel
+@{
+	ViewData["Title"] = "Console Timer";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following console program works. It sets a timer using <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_0euq.asp>SetTimer</a>
+then loops in a message loop. The message loop receives and processes <span><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_1w6q.asp>WM_TIMER</a></span>
+messages and the timer callback also is called for each time interval.</p>
+  <pre style="background-color: #E1E1E1">#define STRICT 1 
+#include &lt;windows.h&gt;
+#include &lt;iostream.h&gt;
+
+VOID CALLBACK <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_52xv.asp>TimerProc</a>(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime) {
+cout &lt;&lt; &quot;Time: &quot; &lt;&lt; dwTime &lt;&lt; '\n';
+cout.flush();
+}
+
+int main(int argc, char *argv[], char *envp[]) {
+	int Counter=0;
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_39f6.asp>MSG</a> Msg;
+UINT TimerId = <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_0euq.asp>SetTimer</a>(NULL, 0, 500, &amp;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_52xv.asp>TimerProc</a>);
+cout &lt;&lt; &quot;TimerId: &quot; &lt;&lt; TimerId &lt;&lt; '\n';
+if (!TimerId)
+	return 16;
+while (<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_10kl.asp>GetMessage</a>(&amp;Msg, NULL, 0, 0)) {
+	++Counter;
+	if (Msg.message == <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_1w6q.asp>WM_TIMER</a>)
+		cout &lt;&lt; &quot;Counter: &quot; &lt;&lt; Counter &lt;&lt; &quot;; timer message\n&quot;;
+	else
+		cout &lt;&lt; &quot;Counter: &quot; &lt;&lt; Counter &lt;&lt; &quot;; message: &quot; &lt;&lt; Msg.message &lt;&lt; '\n';
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_55b9.asp>DispatchMessage</a>(&amp;Msg);
+	}
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/timers_88xe.asp>KillTimer</a>(NULL, TimerId);
+return 0;
+}</pre>
+
+<p>I wrote this program after reading MS KB article <a href="http://support.microsoft.com/support/kb/articles/q102/4/82.asp">Q102482 - INFO:
+SetTimer() Should Not Be Used in Console Applications</a> which says that
+SetTimer() in a console application requires a separate thread. The <a href="http://msdn.microsoft.com/library/periodic/period97/hood0397.htm">Under
+The Hood</a> article in the March 1997 issue of MSJ has a couple of sample
+console programs very similar to mine above. Like mine, they use SetTimer()
+without a separate thread.</p>

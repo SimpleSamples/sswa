@@ -1,0 +1,75 @@
+@page
+@model sswa.Areas.MFC.Pages.CAsyncSocketUDPReceiveModel
+@{
+	ViewData["Title"] = "Receiving UDP Using CAsyncSocket";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following describes a simple sample of receiving UDP packets using CAsyncSocket.</p>
+
+<p>Most of the code exists in a class derived from CAsyncSocket. Therefore begin 
+by using the ClassWizard to derive a class from CAsyncSocket. I used CUDPSocket 
+for my class name. Since CAsyncSocket is asynchronous, we must provide an event 
+handler for receiving. So add an override of OnReceive and modify it in a manner 
+as in the following:</p>
+<pre>void CUDPSocket::OnReceive(int nErrorCode) {
+	CUDPRecord UDPRecord;
+	CString Message;
+	char Buffer[512];	// Increase in size as needed
+	DWORD Error;
+CAsyncSocket::OnReceive(nErrorCode);
+if (nErrorCode) {
+	Message.Format(&quot;OnReceive nErrorCode: %i&quot;, nErrorCode);
+	AfxMessageBox(Message);
+	return;
+	}
+UDPRecord.m_Size = ReceiveFrom(Buffer, sizeof Buffer, UDPRecord.m_IPAddress,
+		UDPRecord.m_Port);
+if (!UDPRecord.m_Size || UDPRecord.m_Size == SOCKET_ERROR) {
+	Error = GetLastError();
+	Message.Format(&quot;ReceiveFrom error code: %u&quot;, Error);
+	AfxMessageBox(Message);
+	return;
+	}
+// process the data
+}</pre>
+<p>Note that I am using the following class to contain the packet information. 
+	The following does not include the data. You do not need to use a class such as 
+	this for the data and you can add a member or members for the data as needed 
+	and/or remove unneeded members.</p>
+<pre>class CUDPRecord : public CObject {
+	DECLARE_DYNAMIC(CUDPRecord)
+public:
+	CString m_IPAddress;
+	UINT m_Port;
+	int m_Size;
+};</pre>
+<p>I also added a member function to simplify the creation of a socket, as in 
+the following:</p>
+<pre>void CUDPSocket::Create(UINT nSocketPort) {
+	CString Message;
+	DWORD Error;
+if (CAsyncSocket::Create(nSocketPort, SOCK_DGRAM, FD_READ, &quot;0.0.0.0&quot;))
+	return;
+Error = GetLastError();
+Message.Format(&quot;The socket for port %u was not created; error %u&quot;,
+		nSocketPort, Error);
+AfxMessageBox(Message);
+}</pre>
+<p>Then to create the socket:</p>
+<pre>ListenSocket.Create(Port);</pre>
+<p>Where:</p>
+<dl>
+	<dt>ListenSocket</dt>
+	<dd>is an instance of the class derived from CAsyncSocket (such as  
+    	CUDPSocket above)</dd>
+	<dt>Port</dt>
+	<dd>is the port to listen to</dd>
+</dl>
+<p>Be sure to close the socket as in:</p>
+<pre>ListenSocket.Close();</pre>
+<h2>Initializing Windows Sockets</h2>
+<p>Call AfxSocketInit in your InitInstance to initialize Windows Sockets.</p>

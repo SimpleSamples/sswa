@@ -1,0 +1,51 @@
+﻿@page
+@model sswa.Areas.Linux.Pages.WslModel
+@{
+	ViewData["Title"] = "WSL";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>Windows 10 and 11 have a <em>Windows Subsystem for Linux</em> (WSL) that
+allows developers to run a Linux environment. It is real Linux except
+does not (yet) support graphics, so GUI
+applications will not work in it. That includes GUI editors such as Visual Studio Code. If you want to get very technical there are <strong>unsupported</strong> and complicated workarounds to allow use of graphics in the WSL. <a href="https://ubuntu.com/wsl">Ubuntu</a> is the default Linux distribution that can be installed by WSL but there are many other Linux distributions that can be installed instead of or in addition to Ubuntu. The best way to install it is as described here.</p>
+<p>If you install a Linux using the WSL then there is plenty of documentation and books and tutorials about Linux. Here are a couple of things unique to the WSL that you need to know. In Windows the WSL filesystem root can be accessed using <span class="inlcode">\\wsl$</span>.
+In Linux, drives can be accessed using <span class="inlcode">/mnt/{drive}</span>.
+In other words, <span class="inlcode">C:</span> in Windows is <span class="inlcode">/mnt/c</span> in WSL.</p>
+<p>Also see <a href="https://docs.microsoft.com/en-us/windows/wsl/faq">FAQ&#39;s about Windows Subsystem for Linux | Microsoft Docs</a>.</p>
+
+<h3>Installation</h3>
+<p>See <a href="https://docs.microsoft.com/en-us/windows/wsl/install">Install WSL</a>.
+	Windows 10 version 2004 and higher (Build 19041 and higher) and Windows 11
+	make it much easier to install WSL. To check which version of Windows you
+	have, execute <span class="inlcode">winver</span>; it will show a window as in the following.</p>
+	<img src="~/images/Winver.jpg" />
+	<p>&nbsp;</p>
+<p>Then install WSL using:</p>
+<div class="code"><pre>wsl --install</pre></div>
+<p>If you get a message saying that that is not valid then install WSL using:</p>
+<div class="code"><pre>wsl --install -d Ubuntu</pre></div>
+<p>Since Ubuntu is the default distribution, specifying it will do the same as
+	when it is not specified but there seems to be (or was) a bug in Windows
+	that causes <span class="inlcode">wsl --install</span> to fail without the
+	distribution being specified explicitly.</p>
+<p>After installation you will need to (it will prompt you to) create a User Name and Password for the default user. That user will be an administrator. Then it will do some initial setup.</p>
+<p>Next you need to (should) apply updates. In Linux the <span class="inlcode">sudo</span>
+	command is used to execute a command as an administrator. The default WSL user
+	can use <span class="inlcode">sudo</span> and must use it to execute commands
+	that require an administrator. One inconvience is that you must enter the
+	password each time you use <span class="inlcode">sudo</span>. If however you use
+	<span class="inlcode">sudo su</span> then you can subsequently use <span class="inlcode">sudo</span> multiple times but
+	enter the password only once. So after issuing <span class="inlcode">sudo su</span>
+	and entering the password, use the command <span class="inlcode">apt update</span>
+	to update the local repository index (it will take a minute to complete) then
+	use the command <span class="inlcode">apt upgrade</span> to apply all the
+	updates (it will take a few minutes to complete). Note that when you use
+	<span class="inlcode">sudo su</span>&nbsp; the prompt will change. You need to exit from
+	<span class="inlcode">sudo su</span> to end it. While
+	<span class="inlcode">sudo su</span> is active when you use the
+	<span class="inlcode">sudo </span>command you do not need to enter the password.</p>
+	<p>Visual Studio Code and WSL can be used to to develop Linux programs; see <a href="https://code.visualstudio.com/docs/remote/wsl">Developing in the Windows Subsystem for Linux with Visual Studio Code</a>.</p>

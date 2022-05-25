@@ -1,0 +1,65 @@
+@page
+@model sswa.Areas.MFC.Pages.FormViewViewModel
+@{
+	ViewData["Title"] = "Creating a CFormView View";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following is a sample of creating a view using CFormView in a MFC MDI 
+application.</p>
+<h2>CMDIViewWindow Class</h2>
+<p>First, derive a class from CMDIChildWnd. I called mine CMDIViewWindow. Then 
+override PreCreateWindow and LoadFrame. Also create a member variable m_hMenu as 
+in:</p>
+<pre>HMENU m_hMenu;</pre>
+<h3>PreCreateWindow</h3>
+<p>The following will remove the WS_THICKFRAME, WS_MINIMIZEBOX and 
+WS_MAXIMIZEBOX styles. You might not want to remove the minimize and/or maximize 
+styles.</p>
+<pre>BOOL CMDIViewWindow::PreCreateWindow(CREATESTRUCT&amp; cs) {
+cs.style &amp;= ~WS_THICKFRAME;
+cs.style |= WS_BORDER;
+cs.style &amp;= ~(WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+return CMDIChildWnd::PreCreateWindow(cs);
+}</pre>
+<h3>LoadFrame</h3>
+<p>The following will do most of the work of creating the view. </p>
+<pre>BOOL CMDIViewWindow::LoadFrame(UINT nIDResource, CFrameWnd *pCurrentFrame,
+		CRuntimeClass *pNewViewClass, DWORD dwDefaultStyle) {
+CCreateContext Context;
+Context.m_pCurrentFrame = pCurrentFrame;
+Context.m_pNewViewClass = pNewViewClass;
+if (!CMDIChildWnd::LoadFrame(nIDResource, dwDefaultStyle, NULL, &amp;Context))
+	return FALSE;
+CString strFullString, strTitle;
+if (strFullString.LoadString(nIDResource))
+	AfxExtractSubString(strTitle, strFullString, CDocTemplate::docName);
+SetTitle(strTitle);
+m_hMenu = ::LoadMenu(AfxGetResourceHandle(), MAKEINTRESOURCE(nIDResource));
+SetHandles(m_hMenu, NULL);
+InitialUpdateFrame(NULL, TRUE);
+return TRUE;
+}</pre>
+<h2>Using CMDIViewWindow </h2>
+<p>Use the CMDIViewWindow class in your Main Frame as in:</p>
+<pre>CMDIViewWindow* pMDIChildWnd = (CMDIViewWindow*) RUNTIME_CLASS(CMDIViewWindow)-&gt;CreateObject();
+if (!pMDIChildWnd) {
+	MessageBox(&quot;Error creating window object&quot;);
+	return;
+	}
+if (!pMDIChildWnd-&gt;LoadFrame(IDD_DIALOG1, this,
+		RUNTIME_CLASS(CYourView), WS_OVERLAPPEDWINDOW)) {
+	MessageBox(&quot;Error creating window&quot;);
+	delete pMDIChildWnd;
+	}</pre>
+<p>Where:</p>
+<dl>
+  <dt>IDD_DIALOG1</dt>
+  <dd>is the dialog control id of your form's dialog</dd>
+  <dt>CYourView</dt>
+  <dd>is the name of your CFormView-derived class. Notice that the class
+  is not enclosed in quotes; RUNTIME_CLASS is a macro.</dd>
+</dl>

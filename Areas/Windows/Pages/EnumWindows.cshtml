@@ -1,0 +1,61 @@
+@page
+@model sswa.Areas.Windows.Pages.EnumWindowsModel
+@{
+	ViewData["Title"] = "EnumWindows";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This is a console-mode program that shows a use of EnumWindows and some of the information that can be gotten using a windows handle. The <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/enumdesktopwindows.asp">EnumDesktopWindows</a>
+function can be used instead of <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/enumwindows.asp">EnumWindows</a>.
+This program can be compiled as-is by Visual C++ as a console program, except
+the GetModuleFileNameEx function uses psapi, which works for Windows NT (and
+2000) only. For more samples and an excellent description of related techniques,
+see Microsoft KB article <a href="http://support.microsoft.com/support/kb/articles/q175/0/30.asp">HOWTO: Enumerate Applications in Win32 (Q175030)</a>.</p>
+
+<p>The output from this program is not especially pretty, but this is just a
+sample use of the functions.</p>
+<pre>#define STRICT  1&nbsp;
+#include &lt;windows.h&gt;
+#include &lt;psapi.h&gt;		// <b>NT only!</b>
+#include &lt;iostream&gt;
+using namespace std;
+#pragma comment(lib, &quot;psapi&quot;)	// <b>NT only!</b>
+
+BOOL CALLBACK <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/enumwindowsproc.asp">EnumWindowsProc</a>(HWND hWnd, LPARAM lParam) {
+	DWORD dwThreadId, dwProcessId;
+	HINSTANCE hInstance;
+	char String[255];
+	HANDLE hProcess;
+if (!hWnd)
+	return TRUE;		// Not a window
+if (!::<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/WinUI/WindowsUserInterface/Windowing/Windows/WindowReference/WindowFunctions/IsWindowVisible.asp">IsWindowVisible</a>(hWnd))
+	return TRUE;		// Not visible
+if (!<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/messagesandmessagequeues/messagesandmessagequeuesreference/messagesandmessagequeuesfunctions/sendmessage.asp">SendMessage</a>(hWnd, <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowmessages/wm_gettext.asp">WM_GETTEXT</a>, sizeof(String), (LPARAM)String))
+	return TRUE;		// No window title
+hInstance = (HINSTANCE)<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windowclasses/windowclassreference/windowclassfunctions/getwindowlong.asp">GetWindowLong</a>(hWnd, GWL_HINSTANCE);
+dwThreadId = <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/getwindowthreadprocessid.asp">GetWindowThreadProcessId</a>(hWnd, &amp;dwProcessId);
+hProcess = <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/openprocess.asp">OpenProcess</a>(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
+cout &lt;&lt; hWnd &lt;&lt; ' ' &lt;&lt; dwProcessId &lt;&lt; '\t' &lt;&lt; String &lt;&lt; '\t';
+// <b>GetModuleFileNameEx uses psapi, which works for NT only!</b>
+if (<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/perfmon/base/getmodulefilenameex.asp">GetModuleFileNameEx</a>(hProcess, hInstance, String, sizeof(String)))
+	cout &lt;&lt; String &lt;&lt; endl;
+else
+	cout &lt;&lt; &quot;(None)\n&quot;;
+CloseHandle(hProcess);
+return TRUE;
+}
+
+int main(int argc, char *argv[], char *envp[]) {
+<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/enumwindows.asp">EnumWindows</a>(<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/enumwindowsproc.asp">EnumWindowsProc</a>, NULL);
+return 0;
+}</pre>
+
+<h2>References</h2>
+<p><a href="http://msdn.microsoft.com/msdnmag/issues/02/07/CQA">C++ Q&amp;A: Get the 
+Main Window, Get EXE Name</a></p>
+<p>
+<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/perfmon/base/using_psapi.asp">
+Using PSAPI</a></p>

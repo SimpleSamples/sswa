@@ -1,0 +1,65 @@
+@page
+@model sswa.Areas.MFC.Pages.ControlResizeModel
+@{
+	ViewData["Title"] = "Adjusting Control Size by Text Size";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The AdjustWindowSize sample function shown below determines the size of text
+in a control, then resizes the control to that size plus the border size. It has
+been tested with edit and static controls only. Your requirements might be different,
+of course, but this sample could be useful for other uses also. This function
+has been used with single-line edit controls and with static controls with
+heights for only a single line of text. The function will probably need to be
+modified for multiline controls. I have not thought for even a second about what
+changes might be needed for multiline controls.</p>
+<p>Prior to use of this function, the text
+is put into the control and then the GetTextSize function (also shown below) is
+used to determine the size of the text in the control.&nbsp;The AdjustWindowSize function has three parameters:</p>
+<ol>
+  <li><u><b>Wnd</b></u><u><b>:</b></u> A reference to a control, such as a CEdit
+    or CStatic.</li>
+  <li><b><u>Rect:</u></b> Pointer to a <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/rectangl_6cqa.asp>RECT</a>
+    structure; the top-left coordinates determine the location of the control
+    and the bottom-right coordinates should be set prior to the call to the size
+    (relative to the bottom-right coordinates) of the text as determined by the
+    GetTextSize function (shown below).</li>
+  <li><u><b>Border:</b></u> Should be CSize(0,0) for all controls except edit
+    controls. Edit controls draw the <span style="font-variant: small-caps">WS_BORDER</span>
+    portion of their borders themselves, so this argument is intended to allow
+    the calculation to be precise for edit controls also. It can be set to
+    something such as:</li>
+</ol>
+<pre>CSize(GetSystemMetrics(SM_CXBORDER) &lt;&lt; 1, GetSystemMetrics(SM_CYBORDER) &lt;&lt; 1);</pre>
+<pre>void CBordersView::AdjustWindowSize(<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CRect.asp>CRect</a> &amp;Rect, <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CSize.asp>CSize</a> &amp;Border) {
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CRect.asp>CRect</a> AdjustedRect(Rect);
+	SIZE Size;
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/adjustwindowrectex.asp>AdjustWindowRectEx</a>(AdjustedRect, Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.GetStyle.asp>GetStyle</a>(), FALSE, Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.GetExStyle.asp>GetExStyle</a>());
+Size.cx = Rect.left - AdjustedRect.left;
+Size.cy = Rect.top - AdjustedRect.top;
+AdjustedRect.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CRect.3a3a.OffsetRect.asp>OffsetRect</a>(Size);
+AdjustedRect.right += Border.cx &lt;&lt; 1;
+AdjustedRect.bottom += Border.cy &lt;&lt; 1;
+Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.MoveWindow.asp>MoveWindow</a>(&amp;AdjustedRect);
+}</pre>
+<p>I discovered that
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions/adjustwindowrectex.asp>AdjustWindowRectEx</a>
+inflates the rectangle, so the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CRect.3a3a.OffsetRect.asp>OffsetRect</a>
+moves the control (if applicable) back to the position specified by the Rect
+parameter.</p>
+<p>The following function is
+used to determine the size of the text in the control (see above).</p>
+  <pre style="background-color: #E1E1E1">void CBordersView::GetTextSize(<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.asp>CWnd</a> &amp;Wnd, <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CSize.asp>CSize</a> &amp;sizeText) {
+	CString s;
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDC.asp>CDC</a> *pdc;
+Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.GetWindowText.asp>GetWindowText</a>(s);
+pdc = Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.GetDC.asp>GetDC</a>();
+CFont *pWndFont = Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.GetFont.asp>GetFont</a>();
+CFont *pPrevFont = pdc-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDC.3a3a.SelectObject.asp>SelectObject</a>(pWndFont);
+sizeText = pdc-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDC.3a3a.GetTextExtent.asp>GetTextExtent</a>(s);
+pdc-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDC.3a3a.SelectObject.asp>SelectObject</a>(pPrevFont);
+Wnd.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.ReleaseDC.asp>ReleaseDC</a>(pdc);
+}</pre>

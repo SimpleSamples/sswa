@@ -1,0 +1,32 @@
+@page
+@model sswa.Areas.MFC.Pages.FormattedMessageBoxModel
+@{
+	ViewData["Title"] = "Formatted MessageBox";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>Here is a little something I have wanted to do and now I have.
+	This combines CString::Format and CWnd::MessageBox into one function.
+	So instead of:</p>
+<pre>CString Message;
+Message.Format(&quot;The integer is: %i&quot;, i);
+Message.MessageBox(Message, &quot;Caption&quot;, MB_OK);</pre>
+<p>You can use this:</p>
+<pre>FormattedMessageBox(&quot;Caption&quot;, MB_OK, &quot;The integer is: %i&quot;, i);</pre>
+<p>The disadvantage is that we must supply values for the caption and type 
+	instead of allowing the defaults to be used. If you want to use
+	CWnd::MessageBox then you need to make the function a member of the window
+	object. If you want to use AfxMessageBox instead then you can make
+	FormattedMessageBox global also.</p>
+<pre>int CSomeWnd::FormattedMessageBox(LPCTSTR lpszCaption,
+		UINT nType, LPCTSTR lpszFormat, ...) {
+CString Message;
+va_list argList;
+va_start(argList, lpszFormat);
+Message.FormatV(lpszFormat, argList);
+va_end(argList);
+return MessageBox(Message, lpszCaption, nType);
+}</pre>

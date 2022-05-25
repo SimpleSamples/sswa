@@ -1,0 +1,133 @@
+@page
+@model sswa.Areas.CSharp.Pages.CreatingGridsWithEvenly_SizedColumnsModel
+@{
+	ViewData["Title"] = "Creating Grids With Evenly-Sized Columns";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article shows one way to get evenly-spaced columns instead of uneven columns in a Wiindows Universal Platform program as in the following:</p>
+<table cellspacing="5" style="margin-left: 50px" >
+    <tr>
+        <th>Uneven</th>
+        <th>Even</th>
+    </tr>
+    <tr>
+        <td><img src="~/images/GridsWithUnevenly-SizedColumnsHalf.jpg" /></td>
+        <td><img src="~/images/GridsWithEvenly-SizedColumnsHalf.jpg" /></td>
+    </tr>
+</table>
+<p>I followed the instructions in <a href="https://blogs.windows.com/buildingapps/2017/02/06/using-sqlite-databases-uwp-apps/#L597J4AmbxROlh5K.97">
+        Using SQLite databases in UWP apps</a>. Okay, but that application
+        shows only one field. I tried doing the same thing except with multiple
+        fields. Everything got centered, which is not commonly done for business
+        systems, but worse than that, the size of cells varied within the columns,
+        so that the columns were uneven. The Universal Windows Platform (UWP) has
+        progressed 
+    from the old style of tables where columns line up; progressed backward that is. I don&#39;t see a way to easily do things the old way.</p>
+<p>Let&#39;s begin with a sample that uses data created internally instead of from a database. I decided to use a short list of attractions around Hollywood. This sample will not support changing the data; it will just show it in a table format like businesses often do. So I created a ClassAttractions (plural) that is a list of ClassAttraction (singular) objects as in the following:</p>
+<pre>class ClassAttractions : List&lt;ClassAttraction&gt;
+{
+	public void Load()
+	{
+		Add(new ClassAttraction("Griffith Observatory",
+			"2800 E Observatory Road", "90027"));
+		Add(new ClassAttraction("La Brea Tar Pits & Museum",
+			"5801 Wilshire Blvd", "90036"));
+		Add(new ClassAttraction("Chinese Theatre",
+			"6925 Hollywood Blvd", "90028"));
+		Add(new ClassAttraction("The Magic Castle",
+			"7001 Franklin Ave", "90028"));
+		Add(new ClassAttraction("The Playboy Mansion",
+			"10236 Charing Cross Road", "90024"));
+	}
+}
+
+class ClassAttraction
+{
+	public string Name { get; set; }
+	public string Address { get; set; }
+	public string Zip { get; set; }
+	public ClassAttraction(string Name, string Address, string Zip)
+	{
+		this.Name = Name;
+		this.Address = Address;
+		this.Zip = Zip;
+	}
+}</pre>
+<p>For the XAML we will need a Grid for the columns so we will use the following in the main Grid:</p>
+<pre>&lt;ListView Name="AttractionsView"&gt;
+	&lt;ListView.ItemTemplate&gt;
+		&lt;DataTemplate&gt;
+			&lt;Grid&gt;
+				&lt;Grid.ColumnDefinitions&gt;
+					&lt;ColumnDefinition/&gt;
+					&lt;ColumnDefinition Width="Auto"/&gt;
+					&lt;ColumnDefinition Width="Auto"/&gt;
+				&lt;/Grid.ColumnDefinitions&gt;
+				&lt;TextBlock Grid.Column="0"  Text="{Binding Name}" /&gt;
+				&lt;TextBlock Grid.Column="1"  Text="{Binding Address}" /&gt;
+				&lt;TextBlock Grid.Column="2"  Text="{Binding Zip}" /&gt;
+			&lt;/Grid&gt;
+		&lt;/DataTemplate&gt;
+	&lt;/ListView.ItemTemplate&gt;
+&lt;/ListView&gt;</pre>
+<p>Then create a &quot;Loaded&quot; event handler for the Page and use the following for it:</p>
+<pre>ClassAttractions Attractions = new ClassAttractions();
+Attractions.Load();
+AttractionsView.ItemsSource = Attractions;</pre>
+<p>Build and run that. The result I get is:</p>
+<p><img src="~/images/GridsWithUnevenly-SizedColumns.jpg" style="margin-left: 50px" /></p>
+<p>That&#39;s not a nice looking table. The columns are uneven; not lined up as we expect tables to be. I tried to solve the problem in many ways and the following is what worked for me. I hope the experts have better ways to do this but until I find something better, this will work. The overview is:</p>
+<ul>
+    <li>Create a temporary control to determine the size to use for each column</li>
+    <li>When each Grid (row) is created, set the size of the columns (cells in the row)</li>
+</ul>
+<p>Use the followng to determine the size for each column; you can put it in the Page&#39;s constructor (after InitializeComponent):</p>
+<pre>Size InfiniteSize = new Size(Double.PositiveInfinity, Double.PositiveInfinity);
+TextBlock tb = new TextBlock();
+tb.FontSize = 15;
+tb.Text = new string('W', 20);  // allow for 20 characters
+tb.Measure(InfiniteSize);
+WidthForName = tb.DesiredSize.Width;
+WidtheForAddress = tb.DesiredSize.Width;    // use the same for both
+tb.Text = "99999";
+tb.Measure(InfiniteSize);
+WidthForZip = tb.DesiredSize.Width;</pre>
+<p>Then give names to the Grid that is our rows and to the TextBlocks that are the cells. For the Grid I used the name &quot;Row&quot; and for the cells I used &quot;BlockName&quot;, &quot;BlockAddress&quot; and &quot;BlockZip&quot;.</p>
+<p>Then create a &quot;Loaded&quot; event handler for &quot;Row&quot; and use the following:</p>
+<pre>Grid g = sender as Grid;
+if (g == null)
+{
+	System.Diagnostics.Debug.WriteLine("No Grid");
+	return;
+}
+if (VisualTreeHelper.GetChildrenCount(g) != 3)
+{
+	System.Diagnostics.Debug.WriteLine("Grid does not have 3 children");
+	return;
+}
+TextBlock tb;
+tb = VisualTreeHelper.GetChild(g, 0) as TextBlock;
+if (tb == null)
+	System.Diagnostics.Debug.WriteLine("No Grid child 0");
+else
+	tb.MinWidth = WidthForName;
+tb = VisualTreeHelper.GetChild(g, 1) as TextBlock;
+if (tb == null)
+	System.Diagnostics.Debug.WriteLine("No Grid child 1");
+else
+	tb.MinWidth = WidtheForAddress;
+tb = VisualTreeHelper.GetChild(g, 2) as TextBlock;
+if (tb == null)
+	System.Diagnostics.Debug.WriteLine("No Grid child 2");
+else
+	tb.MinWidth = WidthForZip;
+// set the size of the row Grid; add 10 for a little extra
+g.MinWidth = WidthForName + WidtheForAddress + WidthForZip + 10;</pre>
+<p>And now we get:</p>
+<p><img src="~/images/GridsWithEvenly-SizedColumns.jpg" style="margin-left: 50px" /></p>
+<p>Isn&#39;t that better? In my opinion, there is too much space between the rows but I will leave that and other details for you to do.</p>
+<p>Note that we can&#39;t use the names &quot;BlockName&quot;, &quot;BlockAddress&quot; and &quot;BlockZip&quot; in our code-behind, I assume because there are multiple instances of the relevant objects. So I use VisualTreeHelper to get the children of the Grid. Note also the final line that sets the width for the Grid. I don&#39;t know what will happen if the Grid is wider than the available space.</p>

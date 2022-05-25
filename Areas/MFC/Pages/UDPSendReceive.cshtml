@@ -1,0 +1,240 @@
+@page
+@model sswa.Areas.MFC.Pages.UDPSendReceiveModel
+@{
+	ViewData["Title"] = "UDP Send and Receive Using CAsyncSocket";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following is sample code showing use of CAsyncSocket to send and receive 
+UDP packets. I used the ClassWizard to create a class (CUDPSocket) derived from 
+CAsyncSocket. The derived class does little more than override OnReceive. The 
+derived class is used in the application's document.</p>
+<h2>Sample Code</h2>
+<h3>File stdafx.h</h3>
+<pre>#pragma once
+
+#define VC_EXTRALEAN
+#include &lt;afxwin.h&gt;
+#include &lt;afxsock.h&gt;
+#include &lt;afxcmn.h&gt;</pre>
+<h3>File UDPSocket.h</h3>
+<pre>class CSendReceiveDocument;
+
+class CUDPSocket : public CAsyncSocket {
+public:
+	CSendReceiveDocument *m_pDocument; // public for debugging
+	CUDPSocket() : m_pDocument(NULL) {};
+	virtual ~CUDPSocket() {};
+	void SetDocument(CSendReceiveDocument *pDocument) {m_pDocument=pDocument;};
+	void Close() {CAsyncSocket::Close();};
+
+	// ClassWizard generated virtual function overrides
+	//{{AFX_VIRTUAL(CUDPSocket)
+	public:
+	virtual void OnReceive(int nErrorCode);
+	//}}AFX_VIRTUAL
+
+	// Generated message map functions
+	//{{AFX_MSG(CUDPSocket)
+		// NOTE - the ClassWizard will add and remove member functions here.
+	//}}AFX_MSG
+};</pre>
+<h3>File UDPSocket.cpp</h3>
+<pre>void CUDPSocket::OnReceive(int nErrorCode) {
+	CString IPAddress;
+	char Buffer[512]; // Increase size as needed
+	CString Message;
+	DWORD Error;
+	UINT Port;
+	int Size;
+CAsyncSocket::OnReceive(nErrorCode);
+if (nErrorCode) {
+	Message.Format(&quot;OnReceive nErrorCode: %i&quot;, nErrorCode);
+	AfxMessageBox(Message);
+	return;
+	}
+Size = ReceiveFrom(Buffer, sizeof Buffer, IPAddress, Port);
+if (!Size || Size == SOCKET_ERROR) {
+	Error = GetLastError();
+	Message.Format(&quot;ReceiveFrom error code: %u&quot;, Error);
+	AfxMessageBox(Message);
+	return;
+	}
+if (m_pDocument)
+	m_pDocument-&gt;OnReceive(Buffer, Size, IPAddress, Port);
+else
+	AfxMessageBox(&quot;No document pointer&quot;);
+}</pre>
+<p>I am using class CSocketAddressIn to simplify use of addresses. The following 
+is the definition.</p>
+<pre>class CSocketAddressIn : sockaddr_in {
+public:
+	CSocketAddressIn()
+		{ZeroMemory(this, sizeof sockaddr_in);sin_family = AF_INET;};
+	CSocketAddressIn(u_long Address, u_short Port = 0);
+	void SetAddress(u_long Address) {sin_addr.s_addr = htonl(Address);};
+	void GetAddress(CString &amp;s) {s=inet_ntoa(sin_addr);};
+	void SetPort(u_short Port) {sin_port = htons(Port);};
+	operator sockaddr *() const {return (struct sockaddr *)this;}
+};</pre>
+<p>The following is the implementation of the extra constructor:</p>
+<pre>CSocketAddressIn::CSocketAddressIn(u_long Address, u_short Port) {
+sin_family = AF_INET;
+sin_addr.s_addr = htonl(Address);
+sin_port = htons(Port);
+ZeroMemory(sin_zero, sizeof sin_zero);
+}</pre>
+<p>The CSendReceiveDocument definition is:</p>
+<pre>class CSendReceiveDocument : public CDocument {
+protected:
+	DECLARE_DYNCREATE(CSendReceiveDocument)
+
+	CUDPSocket m_UDPSocket;
+	int m_DataSize;
+	UINT m_rSocketPort;
+	CString m_rSocketAddress;
+	static const CString m_NoPath;
+	CString m_Message, m_ReceivedData;
+	CTime m_TimeReceived;
+
+	// ClassWizard generated virtual function overrides
+	//{{AFX_VIRTUAL(CSendReceiveDocument)
+	public:
+	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+	virtual void OnCloseDocument();
+	virtual BOOL OnNewDocument();
+	virtual void DeleteContents();
+	virtual void SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU = TRUE);
+	protected:
+	virtual BOOL SaveModified();
+	//}}AFX_VIRTUAL
+
+public:
+	CSendReceiveDocument();
+	virtual ~CSendReceiveDocument() {};
+	void SendTo(LPCTSTR, DWORD, LPCTSTR);
+	void OnReceive(void * const, int, const CString, UINT);
+#ifdef _DEBUG
+	virtual void AssertValid() const;
+	virtual void Dump(CDumpContext&amp; dc) const;
+#endif
+
+// Generated message map functions
+protected:
+	//{{AFX_MSG(CSendReceiveDocument)
+	//}}AFX_MSG
+	DECLARE_MESSAGE_MAP()
+};</pre>
+<p>The CSendReceiveDocument implementation is:</p>
+<pre>const CString CSendReceiveDocument::m_NoPath = &quot;None&quot;;
+
+CSendReceiveDocument::CSendReceiveDocument() : m_DataSize(0), m_rSocketPort(0) {
+	CString Path;
+m_UDPSocket.SetDocument(this);
+CSocketAddressIn SocketAddressIn(INADDR_ANY);
+SocketAddressIn.GetAddress(Path);
+Path += &quot; : 0&quot;;
+SetPathName(Path);
+}
+
+BOOL CSendReceiveDocument::OnOpenDocument(LPCTSTR lpszPathName) {
+	CString ErrorMessage, Message, PathName(lpszPathName), SocketAddress, s;
+	int ColonIndex;
+	UINT Port(0);
+	long Events;
+OnCloseDocument();
+if (PathName == m_NoPath)
+	return TRUE;
+ColonIndex = PathName.Find(':');
+if (ColonIndex == -1)
+	SocketAddress = PathName;
+else {
+	SocketAddress = PathName.Left(ColonIndex);
+	s = PathName.Mid(ColonIndex+1);
+	s.TrimLeft();
+	Port = strtoul(s, NULL, 10);
+	}
+Events = FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE;
+if (!m_UDPSocket.Create(Port, SOCK_DGRAM, Events, SocketAddress)) {
+	GetErrorMessage(GetLastError(), ErrorMessage);
+	Message.Format(&quot;The socket for %s was not created:\r\n%s&quot;,
+		PathName, ErrorMessage);
+	AfxMessageBox(Message);
+	SetPathName(m_NoPath);
+	m_Message = &quot;Open failed&quot;;
+	UpdateAllViews(NULL, 8, NULL);
+	return FALSE;
+	}
+SetPathName(PathName);
+m_Message = &quot;Opened: &quot;;
+m_Message += PathName;
+UpdateAllViews(NULL, 1, NULL);
+SetModifiedFlag(TRUE);
+return TRUE;
+}
+
+void CSendReceiveDocument::OnCloseDocument() {
+m_UDPSocket.Close();
+// CDocument::OnCloseDocument(); // Don't call; will close view and frame
+DeleteContents();
+SetModifiedFlag(FALSE);
+}
+
+BOOL CSendReceiveDocument::OnNewDocument() {
+AfxMessageBox(&quot;Sorry, \&quot;New Document\&quot; is not available&quot;);
+return CDocument::OnNewDocument();
+}
+
+void CSendReceiveDocument::DeleteContents() {
+m_DataSize = 0;
+m_Message.Empty();
+m_ReceivedData.Empty();
+UpdateAllViews(NULL, 9, NULL);
+SetTitle(m_NoPath);
+CDocument::DeleteContents();
+}
+
+void CSendReceiveDocument::SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU) {
+m_strPathName = lpszPathName;
+ASSERT(!m_strPathName.IsEmpty()); // must be set to something
+m_bEmbedded = FALSE;
+SetTitle(lpszPathName);
+}
+
+void CSendReceiveDocument::OnReceive(void *const Buffer, int Size,
+		const CString rSocketAddress, UINT rSocketPort) {
+m_rSocketPort = rSocketPort;
+m_rSocketAddress = rSocketAddress;
+m_DataSize = Size;
+m_TimeReceived = CTime::GetCurrentTime();
+memcpy(m_ReceivedData.GetBuffer(Size), Buffer, Size);
+m_ReceivedData.ReleaseBuffer(Size);
+UpdateAllViews(NULL, 2, NULL);
+}
+
+void CSendReceiveDocument::SendTo(LPCTSTR Data, DWORD dwAddress, LPCTSTR Port) {
+	CSocketAddressIn SocketAddress;
+	CString ErrorMessage, Message;
+	int rv;
+SocketAddress.SetAddress(dwAddress);
+SocketAddress.SetPort((u_short)strtoul(Port, NULL, 10));
+rv = m_UDPSocket.SendTo(Data, strlen(Data), SocketAddress, sizeof SocketAddress, 0);
+if (rv == SOCKET_ERROR) {
+	GetErrorMessage(GetLastError(), ErrorMessage);
+	Message.Format(&quot;The data was not sent:\r\n%s&quot;, ErrorMessage);
+	AfxMessageBox(Message);
+	m_Message = &quot;Send failed&quot;;
+	}
+else
+	m_Message = &quot;Data sent&quot;;
+UpdateAllViews(NULL, 8, NULL);
+}
+
+BOOL CSendReceiveDocument::SaveModified() {return TRUE;}</pre>
+<h2>Description</h2>
+<p>I have not had time to write a description of any of that, but I hope the 
+sample code helps.</p>
+</table>

@@ -1,0 +1,136 @@
+﻿@page
+@model sswa.Areas.Linux.Pages.PuppyLinuxInstallModel
+@{
+	ViewData["Title"] = "Installing Puppy Linux to a Dedicated Partition";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>A <a href="https://puppylinux.com/">Puppy Linux</a> is one (see the list in the website) from a set of Linux distributions built (by someone else usually) with a specified design and
+	using the same specific set of tools. They can be installed into a (much)
+	smaller space than most Linux distributions (that support GUI applications).
+	The major feature that Puppy Linuxes have in common is that they are
+	installed <strong>and booted</strong> in a compressed format. If you have a computer that current Windows is too much for then try a Puppy linux.</p>
+<p>This article is about FossaPup64 but much of the following can
+	probably be used for any Puppy. A FossaPup64 Puppy and many other Puppies
+	can fit in a 500 MB partition, but <strong>only for educational purposes</strong>.
+	A practical Puppy that is for more than experimentation purposes needs to be
+	in a partition of at least 1 GB.</p>
+<p>There are two ways to install a Puppy; <em>Frugal</em> or <em>Full</em>.
+	Puppy developers are beginning to avoid supporting Full installs and Puppy
+	enthusiasts use Full installs much less than Frugal installs so as a
+	beginner use a Frugal install only. A Frugal install can do nearly
+	everything an equivalent Full install can do.</p>
+<p>This article assumes you have Secure Boot enabled in your UEFI BIOS
+	and that you want to continue using it.</p>
+
+<h3>A Puppy&#39;s File System and Save File</h3>
+<p>When a Puppy boots, the operating system is expanded from the compressed file
+	into main memory and a file system is created in memory. A Puppy file system is different from most operating system&#39;s file system. A Linux file system has
+	many sub-directories of the top (&quot;/&quot;) directory; typical
+	sub-directories include <code>etc</code>, <code>home</code>, <code>mnt</code>,
+	<code>root</code>, <code>usr</code> and <code>var</code>. The <code>/home</code>
+	directory is similar to <code>C:\Users</code> in Windows. Any changes to files in any of a Puppy&#39;s files however are only written to memory; to save them permanently to a drive, a save must be done.</p>
+
+<h3>Procedure</h3>
+<p>First ensure that your partition is truly not used. It should be unformatted.
+	Windows does create a couple of small partitions; one for recovery and one
+	for EFI. There might be a fourth partition after the main
+	partition that is unformatted and reserved for use when other sectors go bad, so it is best to not use it either. Please be careful not to format a partition
+	you need. <strong>Be careful</strong>. If you are uncertain then do not do proceed with this.</p>
+    <p>From <a href="https://puppylinux.com/">Puppy Linux</a> download the ISO for FossaPup64.
+	You can leave it in your Downloads folder or move it somewhere else.</p>
+	<p>When you are ready to create a Puppy the best way to do that is to
+<a href="https://github.com/noryb009/lick">Lick</a> it alive. To install Lick, download the zip file for it
+	and copy (uncompress) the files; there are no other installation requirements.
+	Be sure to read the documentation, especially about <em>Fast Startup</em>.</p>
+<p>Execute Lick. It will look like:</p>
+<img src="~/images/LickInitial.jpg" />
+<p>Provide the ISO file you downloaded. The ID and Name will then be filled in. Provide the drive letter of the partition you want the Puppy to live in. <strong>Be Careful!</strong> Be sure to provide the <strong>correct partition</strong>.</p>
+<img src="~/images/Lick.png" />
+<p>In the preceding image, the -4 suffix in the ID means it is the fourth system I have installed using Lick. There will not be a suffix for your first one.</p>
+<p>If you are sure you have the correct partition then click <strong>Install</strong>. In a few seconds your Puppy will be born.</p>
+<p>Lick will create a <a href="https://www.gnu.org/software/grub/">GRUB</a>
+	boot file <code>lickgrub.cfg</code> in the system&#39;s boot partition; in
+	other words, in the root of the <code>C:</code>. It will likely look as in
+	<a href="https://github.com/noryb009/lick/blob/master/res/lickgrub.cfg">lickgrub.cfg</a>
+	except with one or more <code>menuentry</code> sections for each device installed by Lick; something as in the following will be <strong>added</strong>.</p>
+<div class="code"><pre>## start section fossapup64-9.5-4
+menuentry 'fossapup64 9.5' {
+search --set=root --file /fossapup64-9.5-4/vmlinuz
+linux /fossapup64-9.5-4/vmlinuz pfix=fsck dofsck psubdir=fossapup64-9.5-4
+initrd /fossapup64-9.5-4/initrd.gz
+}
+
+menuentry 'fossapup64 9.5 (no save file)' {
+search --set=root --file /fossapup64-9.5-4/vmlinuz
+linux /fossapup64-9.5-4/vmlinuz pfix=ram savefile=none psubdir=fossapup64-9.5-4
+initrd /fossapup64-9.5-4/initrd.gz
+}
+## end section fossapup64-9.5-4</pre></div>
+<p>The GRUB manual is available in a variety of formats; see <a href="https://www.gnu.org/software/grub/manual/grub/">GRUB</a>.</p>
+
+<h3>Conserving Savefile Space</h3>
+    <p>If the partition your Puppy is in is small then you need to use the save file
+	for only customizations and settings. Applications need to be installed
+	somewhere else. The use of the save file by the Puppy can be minimized. This can be done later but it needs to be done before the save file becomes full.</p>
+<p>First make a backup of the <code>lickgrub.cfg</code> file. 
+	The file can be edited by Windows; Visual Studio Code works. Open
+	the file and in the <code>lickgrub.cfg</code> file (see the sample above),
+	for the relevant menuentry, in the linux command if there is a
+	<code>pmedia=atahd</code> argument then change it to <code>pmedia=ataflash</code>
+	otherwise add <code>pmedia=ataflash</code> to the linux command. In other words,
+	change:</p>
+<div class="code"><pre>linux /fossapup64-9.5-4/vmlinuz pfix=fsck dofsck psubdir=fossapup64-9.5-4</pre></div>
+<p>To:</p>
+<div class="code"><pre>linux /fossapup64-9.5-4/vmlinuz pfix=fsck dofsck psubdir=fossapup64-9.5-4 pmedia=ataflash</pre></div>
+
+<h3>Booting</h3>
+<p>Restart your system. The procedure for selecting an opearting system to boot varies by computer. In the UEFI BIOS you should see an entry for Lick. Boot that.</p>
+	<p>There is however a feature of Windows that makes it easier to get to the BIOS. When restarting Windows, hold down the Shift key while clicking <em>Restart</em>. That will take you to some special screens. The details of what to do from there varies but if you see <em>Troubleshoot</em> then click that. Somewhere there will be an option to go to the UEFI Firmware.</p>
+<p>When booting, you are likely to get messages as in the following:</p>
+<blockquote><pre>The system found unauthorized changes on the firmware, operating system or UEFI drivers.
+
+Press [N] to run the next boot device,or enter directly to BIOS Setup if there
+are no other boot devices installed.
+Go to BIOS Setup > Advanced > Boot and change the current boot device into
+other secured boot devices.</pre></blockquote>
+<p>When you do, just press N to get to the GRUB boot menu. To eliminate the problem, in your UEFI BIOS for Secure Boot change the OS Type from <em>Windows UEFI</em> to <em>Other OS</em>. You can change the OS Type back when you do boot direct to Windows. It is recommended that you don&#39;t change the OS Type and just know that that is the reason you get that message.</p>
+<p>The GRUB boot menu will look something as in the following. This menu shows Windows as the first (default) and then two Puppy Linuxes. Each of the two can be booted with or without a save file.</p>
+<img src="~/images/GRUBmenu.jpg" width="512" />
+<p>The following is what your Puppy will look like.</p>
+<img src="~/images/FirstBoot.png" width="512" />
+
+<p>The window in the middle is for a Quick Setup; it is shown only the first time. In the Left side of Quick Setup are settings for language and timezone. There is also a checkbox for using UTC for the system clock. UTC for the system clock is the default for most Linux distributions but that is incompatible with Windows. The checkbox is unchecked by default and for compatibility with Windows you want it to stay unchecked.</p>
+<p>After booting your Puppy go to Menu&gt;System&gt;Puppy Event Manager and then
+	click the <em>Save Session</em> tab and verify that the Save interval is
+	0 (zero); if not then set it to 0. Also verify that the <code>Ask at shutdown</code>
+	checkbox is checked. Those settings will prevent automatic saves and allow
+	you to determine when your system is saved.</p>
+<p>To restart or shutdown your system click in the lower-left and select
+	<code>???</code>. You will see the following:</p>
+<img src="~/images/LogOut.png" />
+<p>The first time you restart or shutdown your system your Puppy will request
+	you do some additional setup. The first one will look like:</p>
+<img src="~/images/FirstShutdown.png" />
+<p>The second one will look like:</p>
+<img src="~/images/ChooseFilesystem.png" />
+<p>The third one will look like:</p>
+<img src="~/images/SavefileSize.png" />
+<p>The fourth one will look like:</p>
+<img src="~/images/PupSaveName.png" />
+<p>The fifth one will look like:</p>
+<img src="~/images/SanityCheck.png" />
+<p>The final one will look like:</p>
+<img src="~/images/Swapfile.png" />
+
+<h3>History of Puppys</h3>
+<p>Puppy Linuxes were originally created to run on a Windows computer from a CD. It would
+	get all files from the CD without using any of the system's other drives.
+	And that is what a Frugal install continues to do. Except for the USB drive
+	the settings, customizations and new applications can be saved to a Save File.
+	Save Files were desinged since USB-Keys (Thumb drives) support a limited number of writes, so to
+	limit the number of writes to them, Puppys use a Save File.
+</p>

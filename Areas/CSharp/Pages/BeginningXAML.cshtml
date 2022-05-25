@@ -1,0 +1,92 @@
+@page
+@model sswa.Areas.CSharp.Pages.BeginningXAMLModel
+@{
+	ViewData["Title"] = "Beginning XAML";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article provides a simple way to try XAML without C#. I have this in the 
+C# section of htis web site but it also applies to VB.Net of course and anywhere 
+that WPF is used. This is for 
+anyone unfamilair with XAML that wants to get an idea of what it is and how 
+it works. This article only explains XAML, not WPF or even C#. You don't 
+even need special software for this article; you can use just Notepad and 
+a browser such as Microsoft Edge or Internet Explorer if you wish. You can use most any text editor, including 
+Visual Studio if you wish. I won't provide the concepts; you can get that 
+elsewhere. The intent is to allow you to have a little fun playing with XAML to 
+become familiar with it.</p>
+<p>It is possible to create a XAML file and then see the results in 
+a browser simply by browsing to the file. The trick is to use the "Page" tag as 
+the root in the XAML file. Usually when we create a window using XAML with WPF 
+the root tag is "Window". If you try to browse a XAML file with root tag as 
+"Window" in the browser directly then it won't work. The XAML in this article will do 
+nothing except create the corresponding window; there is no "code behind" so if 
+you click on a button, nothing happens. The XAML in this article is not good for 
+anything except for learning purposes.</p>
+<p>So without further explanation, we will dive in. Using any text editor, put the following in a text file:</p>
+<pre>&lt;Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:sys="clr-namespace:System;assembly=mscorlib"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+&gt;
+&lt;Label Content="This is a Label" /&gt;
+&lt;/Page&gt;
+</pre>
+<p>Then save the file with the extension "xaml". If you are unsure of what I 
+mean then please download the attached zip file and look at the file 
+"skeleton.xaml". When you browse to the file in the browser you will get:</p>
+<p><img alt="skeleton.xaml" height="215" src="~/images/Skeleton.png" width="353"></p>
+<p>Note that the Label tag created a Label. So now for the fun part. Try 
+adding the following tag afer the Label tag:</p>
+<pre>&lt;Button Content="Button" Width="75" Height="23" HorizontalAlignment="Left" VerticalAlignment="Top"/&gt;</pre>
+<p>Then refresh the page if you still have the file open in the browser or browse to 
+the file using the browser. You will get:</p>
+<p><img alt="An error" height="512" src="~/images/AnError.png" width="650"></p>
+<p>That is not fun. So we will use a Grid tag and put the other stuff in it. 
+So try the following with the "Page" tag (I am excluding the "Page" tag from 
+the following):</p>
+<pre>&lt;Grid&gt;
+&lt;Label Content="This is a Label" Margin="12,12,0,0" /&gt;
+&lt;Button Content="Button" Margin="12,48,0,0" Width="75" Height="23"
+HorizontalAlignment="Left" VerticalAlignment="Top" /&gt;
+&lt;/Grid&gt;
+</pre>
+<p>You can play around with that. The following shows a bunch of stuff; give 
+this a try (there should be nothing else in the file except the Page tag):</p>
+<pre>&lt;DockPanel&gt;
+&lt;Menu Height="25" DockPanel.Dock="Top"&gt;
+&lt;MenuItem Header="_File"&gt;
+&lt;MenuItem Header="_Open"/&gt;
+&lt;MenuItem Header="_Save"/&gt;
+&lt;MenuItem Header="Save_As"/&gt;
+&lt;/MenuItem&gt;
+&lt;/Menu&gt;
+&lt;StatusBar Height="25" Margin="2,2,0,0" Name="statusBar1" DockPanel.Dock="Bottom"&gt;
+&lt;StatusBarItem&gt;This StatusBar works&lt;/StatusBarItem&gt;
+&lt;/StatusBar&gt;
+&lt;Grid Height="300"&gt;
+&lt;Label Content="Test Label" Height="30" HorizontalAlignment="Left" Margin="12,12,0,0" VerticalAlignment="Top" Width="290" FontSize="14" BorderThickness="2" HorizontalContentAlignment="Center" BorderBrush="#7F000000" FontWeight="Bold" /&gt;
+&lt;Button Content="Button" Height="23" HorizontalAlignment="Left" Margin="12,63,0,0" VerticalAlignment="Top" Width="75" /&gt;
+&lt;CheckBox Content="CheckBox" Height="16" HorizontalAlignment="Left" Margin="115,63,0,0" VerticalAlignment="Top" /&gt;
+&lt;ListBox Height="100" HorizontalAlignment="Left" Margin="12,138,0,0" VerticalAlignment="Top" Width="75" DataContext="{Binding}"&gt;
+&lt;ListBoxItem Content="One" /&gt;
+&lt;ListBoxItem Content="Two" /&gt;
+&lt;ListBoxItem Content="Three" /&gt;
+&lt;/ListBox&gt;
+&lt;Grid.ContextMenu&gt;
+&lt;ContextMenu&gt;
+&lt;MenuItem Header="Cut"/&gt;
+&lt;MenuItem Header="Copy"/&gt;
+&lt;MenuItem Header="Paste"/&gt;
+&lt;/ContextMenu&gt;
+&lt;/Grid.ContextMenu&gt;
+&lt;/Grid&gt;
+&lt;/DockPanel&gt;
+</pre>
+<p>Using that we can get:</p>
+<p><img alt="Completed sample" height="439" src="~/images/FullSample.png" width="376"></p>
+<p>Note that if yopu put the following attributes in the Page tag then they 
+will specify the size of the window within the browser window:</p>
+<pre>Height="350" Width="320"</pre>

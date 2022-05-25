@@ -1,0 +1,117 @@
+@page
+@model sswa.Areas.MFC.Pages.ModelessDialogsModel
+@{
+	ViewData["Title"] = "Modeless Dialogs";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>There are a few details about using MFC to create and use modeless dialogs that are
+documented in various places. So I hope it is helpful to have this summary to use instead
+of all the many references in the MFC documentation.</p>
+
+<p>One thing that it helps to understand is that dialogs can be created either on the
+stack or in the heap. This is true of course for most any object, but the details of how
+to program a modeless dialog is more dependent than other objects upon whether it exists
+on the stack or in the heap. I will first show how to make a modeless-dialog-based
+application that creates the modeless dialog on the heap.</p>
+
+<p>Thanks to CodeGuru DanielK, I have been informed of a <strong>new</strong> Knowledge
+Base article describing how to create modeless dialogs. I wish the documentation existed
+when I first struggled with creating modeless dialogs. See:
+<a href="http://support.microsoft.com/support/kb/articles/q103/7/88.asp">
+Q103788 - INFO: Creating a Modeless Dialog Box with MFC Libraries</a>.</p>
+
+<p>If your project is an ATL .exe project, then see
+<a href="http://support.microsoft.com/support/kb/articles/q216/5/03.asp">
+Q216503 - PRB: Problems Showing an ATL Dialog Box as Modeless in ATL .exe</a>.</p>
+
+<p>You can create a modeless-dialog-based application by generating a dialog-based
+application using AppWizard, then modifying it as follows. Use ClassWizard to override
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>, OnOK and OnCancel in the dialog and make them look something like this:</p>
+
+  <pre>void CModelessDlg::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>() {
+CDialog::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>();
+delete this;
+}</pre>
+  <pre>void CModelessDlg::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnOK.asp>OnOK</a>() {
+MessageBox(&quot;Ok&quot;);
+}</pre>
+  <pre>void CModelessDlg::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnCancel.asp>OnCancel</a>() {
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.DestroyWindow.asp>DestroyWindow</a>();
+}</pre>
+
+<p>The override for <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>
+is necessary because our program does not know when the dialog will be
+dismissed. So the dialog must take care of removing itself from the system. Refer to the documentation for 
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.asp>CDialog</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnOK.asp>OnOK</a> and <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.asp>CDialog</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnCancel.asp>OnCancel</a>
+ for an explanation of those overrides. In particular, notice that if you want <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnOK.asp>OnOK</a>
+ <b>to dismiss</b> the dialog, then you need to call 
+ <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.DestroyWindow.asp>DestroyWindow</a>
+ in <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnOK.asp>OnOK</a>
+ also.
+</p>
+
+<p>Then in your application's InitInstance, <strong>replace</strong>:</p>
+
+<pre>CModelessDlg dlg;
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinThread.3a3a.m_pMainWnd.asp>m_pMainWnd</a> = &amp;dlg;
+int nResponse = dlg.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.DoModal.asp>DoModal</a>();
+if (nResponse == IDOK)
+	{
+	}
+else if (nResponse == IDCANCEL)
+	{
+	}</pre>
+
+<p>with:</p>
+
+<pre>CModelessDlg *pModelessDlg = new CModelessDlg();
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinThread.3a3a.m_pMainWnd.asp>m_pMainWnd</a> = pModelessDlg;
+if (pModelessDlg-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.Create.asp>Create</a>(IDD_MODELESS_DIALOG))
+	return TRUE;</pre>
+
+<p>To understand what is happening here, it is necessary to understand a couple of things about
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.InitInstance.asp>InitInstance</a>.
+InitInstance normally executes, then exits after it has created the main window. In a
+dialog-based application, though, InitInstance is usually used to execute the <strong>entire</strong>
+application, in which case the application exits after the dialog exits. For a
+modeless-dialog-based application, though, we want to use InitInstance the way it is
+normally used; that is, we want to create the modeless dialog in InitInstance but then we
+want the dialog to be able to persist after InitInstance has finished. So in the original
+dialog-based application, the modal dialog is created on the stack and is therefore
+deleted when InitInstance exits, but we modify that by creating the dialog in the heap.</p>
+
+<hr>
+
+<p>Note that in the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.asp>CDialog</a> documentation it says &quot;If you wish to create a
+modeless dialog, call <b>Create</b> in the constructor of your dialog class.&quot;. I do not understand
+that and it seems to be unnecessary. In <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.asp>CDialog</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.Create.asp>Create</a>
+it says &quot;You can put the call to <b>Create</b> inside the constructor or call it
+after the constructor is invoked.&quot;.</p>
+
+<p>Also, <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CDialog.3a3a.OnOK.asp>OnOK</a> says to call
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.DestroyWindow.asp>DestroyWindow</a>
+in OnOk. This should be done if you want the dialog to end when the Ok button is pressed,
+but it is not necessary if you want the dialog to continue after the Ok button is
+pressed.</p>
+
+<p>I usually rename the &quot;Cancel&quot; button so that it's name is &quot;Exit&quot;,
+since that makes more sense. The command id (ID_CANCEL) could still be used, though.</p>
+
+<h2>Creating a Modeless Dialog On the Stack</h2>
+
+<p>It is possible to create a modeless dialog on the stack, and there are situations when
+this would be the best solution. A good example of when to create a modeless dialog on the
+stack is for a progress dialog that is used in just one function and then is not needed
+after the function completes. If a modeless dialog is created on the stack, then the
+override for
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>
+is not needed and should not be used (at least not the &quot;<tt>delete this</tt>&quot;),
+since the dialog will be deleted automatically when the function exits.</p>
+
+<hr>
+
+<p align="center">Your results can vary dependent upon the version of VC you have.</p>

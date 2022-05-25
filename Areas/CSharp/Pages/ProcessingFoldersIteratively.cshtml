@@ -1,0 +1,225 @@
+@page
+@model sswa.Areas.CSharp.Pages.ProcessingFoldersIterativelyModel
+@{
+	ViewData["Title"] = "Processing Folders Iteratively";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article shows how to retrieve subdirectories of a Windows directory 
+iteratively instead of recursively. Typically, recursion is used to retrieve 
+hierarchically recursive data such as directories. Please see my article
+<a href="../Miscellaneous/RetrievingHierarchicallyRecursiveDataIteratively.aspx">Retrieving Hierarchically Recursive Data Iteratively</a> for a description 
+of retrieving hierarchically recursive data iteratively.</p>
+<p>The example for this article retrieves the directories of the user's 
+Internet Explorer Favorites but could easily be adapted for other 
+directories. If you are like me, your favorites are organized into many 
+folders. This example does not retrieve the actual favorites; they are 
+individual files within the directories. Reading the files (favorites) would 
+be an easy addition.</p>
+<p>To retrieve the directories, a class called "Folder" is used with the 
+following members:</p>
+<table style="width: 90%" align="center">
+	<tr>
+		<th>Name</th>
+		<th>Type</th>
+		<th>Description</th>
+	</tr>
+	<tr>
+		<td>Name</td>
+		<td>string</td>
+		<td>Unqualified folder name</td>
+	</tr>
+	<tr>
+		<td>Parent</td>
+		<td>Folder</td>
+		<td>Recursive reference to a parent folder</td>
+	</tr>
+	<tr>
+		<td>Attributes</td>
+		<td>FileAttributes</td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>CreationTime</td>
+		<td>DateTime</td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>LastAccessTime</td>
+		<td>DateTime</td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>LastWriteTime</td>
+		<td>DateTime</td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>Children</td>
+		<td>List&lt;Folder&gt;</td>
+		<td>Subdirectories</td>
+	</tr>
+	<tr>
+		<td>Level</td>
+		<td>int</td>
+		<td>Hierarchical depth, used only for formatting output</td>
+	</tr>
+	<tr>
+		<td>GetFolder</td>
+		<td>Stack&lt;Folder&gt; ToDo, string root</td>
+		<td>Gets the subdirectories of the directory</td>
+	</tr>
+	<tr>
+		<td>Qualify</td>
+		<td>string</td>
+		<td>Creates an absolute path</td>
+	</tr>
+	<tr>
+		<td>Unqualify</td>
+		<td>string</td>
+		<td>Gets just the unqualified name of a directory</td>
+	</tr>
+	<tr>
+		<td>PutFolder(Stack&lt;Folder&gt; ToDo, StreamWriter sw)</td>
+		<td>void</td>
+		<td>Writes the folder to the text file and queues the children</td>
+	</tr>
+</table>
+<p>Note that the Name is just the unqualified name and does not include the 
+qualification.</p>
+<p>The Internet Explorer Favorites are usually stored in the "<a href="file:///C:/Users/{User}/Favorites">C:\Users\{User}\Favorites</a>" 
+directory, so Name in the Folder object for the top folder to be processed is 
+just "Favorites". The Internet Explorer Favorites are usually stored in the 
+"<a href="file:///C:/Users/{User}/Favorites">C:\Users\{User}\Favorites</a>" 
+directory. We use the following to get the "<a href="file:///C:/Users/{User}/Favorites">C:\Users\{User}</a>" 
+portion:</p>
+<pre>Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);</pre>
+<p>To begin the iteration, we first create a "Folder" object for the top 
+folder, "Favorites ", and push it onto the stack. After pushing "Favorites" 
+onto the stack, we begin the iteration that pops it off the stack and 
+processes it. We process each object (folder) by retrieving its children and 
+pushing each of them onto the stack of folders to do.</p>
+<p>The sample program retrieves the folders into "Folder" objects then uses 
+(shows) a separate loop to write them to a text file. Note that you will 
+need to change the name of the file in the sample program.</p>
+<p>
+	The following is the Main method of the console program:</p>
+	<pre><span style="color: #ff0000; ">string</span> RootFolderName = <span style="color: #004085; ">Environment</span>.<span style="color: #191970; font-weight: bold; ">GetFolderPath</span>(<span style="color: #004085; ">Environment</span>.<span style="color: #004085; font-weight: bold; ">SpecialFolder</span>.<span style="font-style: italic; ">UserProfile</span>);
+
+<span style="color: #004085; ">Folder</span> TopFolder = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">Folder</span>();
+TopFolder.<span style="font-style: italic; ">Name</span> = <span style="color: #0000ff; ">"Favorites"</span>;
+<span style="font-style: italic; ">ToDo</span>.<span style="color: #191970; font-weight: bold; ">Push</span>(TopFolder);
+<span style="color: #008080; font-weight: bold; ">try</span> {<span style="font-style: italic; ">sw</span> = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">StreamWriter</span>(<span style="font-style: italic; ">OutFilename</span>);}
+<span style="color: #008080; font-weight: bold; ">catch</span> (<span style="color: #004085; ">Exception</span> ex)
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Console</span>.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"Output file error: {0}"</span>, ex.Message);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #000080; ">return</span>;
+}
+<span style="color: #008000; ">// Get the folders</span>
+<span style="color: #004085; ">Console</span>.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"\tGetting"</span>);
+<span style="color: #0000ff; font-weight: bold; ">while</span> (<span style="font-style: italic; ">ToDo</span>.Count &gt; <span style="color: #00008b; ">0</span>)
+{
+&nbsp;&nbsp;&nbsp;&nbsp;(<span style="font-style: italic; ">ToDo</span>.<span style="color: #191970; font-weight: bold; ">Pop</span>()).<span style="color: #191970; font-weight: bold; ">GetFolder</span>(<span style="font-style: italic; ">ToDo</span>, RootFolderName);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// The following will write something to the console</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// just so we know the program is working.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Console</span>.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"\tToDo.Count={0}"</span>, <span style="font-style: italic; ">ToDo</span>.Count);
+}
+<span style="color: #008000; ">// Put the folders. Start by creating the ToDo stack again.</span>
+<span style="color: #004085; ">Console</span>.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"\tPutting"</span>);
+<span style="font-style: italic; ">ToDo</span>.<span style="color: #191970; font-weight: bold; ">Push</span>(TopFolder);
+<span style="color: #0000ff; font-weight: bold; ">while</span> (<span style="font-style: italic; ">ToDo</span>.Count &gt; <span style="color: #00008b; ">0</span>)
+{
+&nbsp;&nbsp;&nbsp;&nbsp;(<span style="font-style: italic; ">ToDo</span>.<span style="color: #191970; font-weight: bold; ">Pop</span>()).<span style="color: #191970; font-weight: bold; ">PutFolder</span>(<span style="font-style: italic; ">ToDo</span>, <span style="font-style: italic; ">sw</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// The following will write something to the console</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// just so we know the program is working.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Console</span>.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"ToDo.Count={0}"</span>, <span style="font-style: italic; ">ToDo</span>.Count);
+}
+<span style="font-style: italic; ">sw</span>.<span style="color: #191970; font-weight: bold; ">Flush</span>();</pre>
+<p>Where the "ToDo" stack is:</p>
+<pre><span style="color: #a52a2a; ">static</span> <span style="color: #004085; ">Stack</span>&lt;<span style="color: #004085; ">Folder</span>&gt; <span style="font-style: italic; ">ToDo</span> = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">Stack</span>&lt;<span style="color: #004085; ">Folder</span>&gt;();</pre>
+<p>And "sw" is a StreamWriter as in:</p>
+	<pre><span style="color: #a52a2a; ">static</span> <span style="color: #004085; ">StreamWriter</span> <span style="font-style: italic; ">sw</span> = <span style="font-weight: bold; ">null</span>;</pre>
+	<p>The  following is the "Folder" class:</p>
+	<pre><span style="color: #ff0000; ">class</span> <span style="color: #004085; ">Folder</span>
+{
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #ff0000; ">string</span> <span style="font-style: italic; ">Name</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; ">Folder</span> <span style="font-style: italic; ">Parent</span> = <span style="font-weight: bold; ">null</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; font-weight: bold; ">FileAttributes</span> Attributes { <span style="color: #8b4513; ">get</span>; <span style="color: #8b4513; ">set</span>; }
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; font-weight: bold; ">DateTime</span> CreationTime { <span style="color: #8b4513; ">get</span>; <span style="color: #8b4513; ">set</span>; }
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; font-weight: bold; ">DateTime</span> LastAccessTime { <span style="color: #8b4513; ">get</span>; <span style="color: #8b4513; ">set</span>; }
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; font-weight: bold; ">DateTime</span> LastWriteTime { <span style="color: #8b4513; ">get</span>; <span style="color: #8b4513; ">set</span>; }
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #004085; ">List</span>&lt;<span style="color: #004085; ">Folder</span>&gt; <span style="font-style: italic; ">Children</span> = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">List</span>&lt;<span style="color: #004085; ">Folder</span>&gt;();
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #ff0000; font-weight: bold; ">int</span> <span style="font-style: italic; ">Level</span> = <span style="color: #00008b; ">0</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// only for formatting output</span>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> Gets the information for a folder including the subdirectories.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> A new object is created for each subdirectory and each of them</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> is added to the Children for this directory and to the ToDo stack.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">/summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">param</span> <span style="font-weight: bold; ">name=</span><span style="color: #c0c0c0; font-weight: bold; ">"ToDo"</span>&gt;&lt;<span style="font-weight: bold; ">/param</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">internal</span> <span style="color: #ff0000; ">void</span> <span style="color: #191970; font-weight: bold; ">GetFolder</span>(<span style="color: #004085; ">Stack</span>&lt;<span style="color: #004085; ">Folder</span>&gt; ToDo, <span style="color: #ff0000; ">string</span> root)
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #ff0000; ">string</span> Path = root + <span style="color: #ff00ff; ">'\\'</span> + <span style="color: #191970; font-weight: bold; ">Qualify</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">DirectoryInfo</span> di = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">DirectoryInfo</span>(Path);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attributes = di.Attributes;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CreationTime = di.CreationTime;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LastAccessTime = di.LastAccessTime;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LastWriteTime = di.LastWriteTime;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">List</span>&lt;<span style="color: #ff0000; ">string</span>&gt; dirs = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">List</span>&lt;<span style="color: #ff0000; ">string</span>&gt;(<span style="color: #004085; ">Directory</span>.<span style="color: #191970; font-weight: bold; ">EnumerateDirectories</span>(Path));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">foreach</span> (<span style="color: #ff0000; ">string</span> fn <span style="color: #0000ff; font-weight: bold; ">in</span> dirs)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Folder</span> sf = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">Folder</span>();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sf.<span style="font-style: italic; ">Name</span> = <span style="color: #004085; ">Folder</span>.<span style="color: #191970; font-weight: bold; ">Unqualify</span>(fn);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sf.<span style="font-style: italic; ">Parent</span> = <span style="font-weight: bold; ">this</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sf.<span style="font-style: italic; ">Level</span> = <span style="font-style: italic; ">Level</span> + <span style="color: #00008b; ">1</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-style: italic; ">Children</span>.<span style="color: #191970; font-weight: bold; ">Add</span>(sf);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ToDo.<span style="color: #191970; font-weight: bold; ">Push</span>(sf);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;}
+
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> This will prefix the parent directory names separated</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> by backslashes to create a fully qualified path. The</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> result must be qualified by the root path.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">/summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">param</span> <span style="font-weight: bold; ">name=</span><span style="color: #c0c0c0; font-weight: bold; ">"Folder"</span>&gt;&lt;<span style="font-weight: bold; ">/param</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">returns</span>&gt;&lt;<span style="font-weight: bold; ">/returns</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #ff0000; ">string</span> <span style="color: #191970; font-weight: bold; ">Qualify</span>()
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Folder</span> TempFolder = <span style="font-weight: bold; ">this</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #004085; ">Stack</span>&lt;<span style="color: #ff0000; ">string</span>&gt; names = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #004085; ">Stack</span>&lt;<span style="color: #ff0000; ">string</span>&gt;();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;names.<span style="color: #191970; font-weight: bold; ">Push</span>(<span style="font-style: italic; ">Name</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">while</span> (TempFolder.<span style="font-style: italic; ">Parent</span> != <span style="font-weight: bold; ">null</span>)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TempFolder = TempFolder.<span style="font-style: italic; ">Parent</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;names.<span style="color: #191970; font-weight: bold; ">Push</span>(TempFolder.<span style="font-style: italic; ">Name</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #000080; ">return</span> <span style="color: #ff0000; ">string</span>.<span style="color: #191970; font-weight: bold; ">Join</span>(<span style="color: #0000ff; ">"\\"</span>, names.<span style="color: #191970; font-weight: bold; ">ToArray</span>());
+&nbsp;&nbsp;&nbsp;&nbsp;}
+
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> Since Directory.EnumerateDirectories returns the fully qualified path</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> of each directory, we need to get just the unqualified name of a directory.</span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">/summary</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">param</span> <span style="font-weight: bold; ">name=</span><span style="color: #c0c0c0; font-weight: bold; ">"dir"</span>&gt;</span>fully qualified path<span style="color: #808080; ">&lt;<span style="font-weight: bold; ">/param</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; "><span style="color: #808080; ">///</span> <span style="color: #808080; ">&lt;<span style="font-weight: bold; ">returns</span>&gt;</span>unqualified path<span style="color: #808080; ">&lt;<span style="font-weight: bold; ">/returns</span>&gt;</span></span>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">public</span> <span style="color: #a52a2a; ">static</span> <span style="color: #ff0000; ">string</span> <span style="color: #191970; font-weight: bold; ">Unqualify</span>(<span style="color: #ff0000; ">string</span> dir)
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #ff0000; font-weight: bold; ">int</span> i = dir.<span style="color: #191970; font-weight: bold; ">LastIndexOf</span>(<span style="color: #ff00ff; ">'\\'</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #000080; ">return</span> dir.<span style="color: #191970; font-weight: bold; ">Substring</span>(i + <span style="color: #00008b; ">1</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;}
+
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">internal</span> <span style="color: #ff0000; ">void</span> <span style="color: #191970; font-weight: bold; ">PutFolder</span>(<span style="color: #004085; ">Stack</span>&lt;<span style="color: #004085; ">Folder</span>&gt; ToDo, <span style="color: #004085; ">StreamWriter</span> sw)
+&nbsp;&nbsp;&nbsp;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #ff0000; ">string</span> tabs = <span style="color: #008b8b; font-weight: bold; ">new</span> <span style="color: #ff0000; ">string</span>(<span style="color: #ff00ff; ">'\t'</span>, <span style="font-style: italic; ">Level</span>);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sw.<span style="color: #191970; font-weight: bold; ">WriteLine</span>(<span style="color: #0000ff; ">"{0}{1} {2} {3}"</span>, tabs, <span style="font-style: italic; ">Name</span>, CreationTime, LastAccessTime);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// since the stack is LIFO, the objects will be popped off in</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// reverse order from what they are pushed, so we will push</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #008000; ">// in reverse order</span>&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #0000ff; font-weight: bold; ">for</span> (<span style="color: #ff0000; font-weight: bold; ">int</span> i = <span style="font-style: italic; ">Children</span>.Count - <span style="color: #00008b; ">1</span>; i &gt;= <span style="color: #00008b; ">0</span>; --i)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ToDo.<span style="color: #191970; font-weight: bold; ">Push</span>(<span style="font-style: italic; ">Children</span>[i]);
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>

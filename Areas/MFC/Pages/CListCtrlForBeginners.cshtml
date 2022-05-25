@@ -1,0 +1,98 @@
+@page
+@model sswa.Areas.MFC.Pages.CListCtrlForBeginnersModel
+@{
+	ViewData["Title"] = "CListCtrl For Beginners";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The MFC CListCtrl class is a wrapper around the control the Windows Files Explorer
+uses for it's right-side pane, but figuring out how to use the control can be a different
+kind of pain. The control is usually used only in &quot;report view&quot;, which provides
+columns for each item. The following shows the basics of adding data to a List Control:</p>
+
+<pre>	int Index;
+// Insert columns
+ListCtrl.InsertColumn(0, &quot;One&quot;, LVCFMT_LEFT, -1, 0);
+ListCtrl.InsertColumn(1, &quot;Two&quot;, LVCFMT_LEFT, -1, 1);
+// Insert first row
+Index = ListCtrl.InsertItem(LVIF_TEXT, 0, &quot;One one&quot;, 0, 0, 0, NULL);
+ListCtrl.SetItem(Index, 1, LVIF_TEXT, &quot;One two&quot;, 0, 0, 0, NULL);
+// Insert second row
+Index = ListCtrl.InsertItem(LVIF_TEXT, 1, &quot;Two one&quot;, 0, 0, 0, NULL);
+ListCtrl.SetItem(Index, 1, LVIF_TEXT, &quot;Two two&quot;, 0, 0, 0, NULL);
+// Set column widths (an optional nice touch)
+ListCtrl.SetColumnWidth(0, LVSCW_AUTOSIZE);
+ListCtrl.SetColumnWidth(1, LVSCW_AUTOSIZE);</pre>
+
+<p>If you are using CListView, then you will need to use something such as the
+following to access the CListCtrl:</p>
+
+<pre>CListCtrl &amp;ListCtrl = GetListCtrl();</pre>
+
+<p>Note that for these to work, the control must have the &quot;LVS_REPORT&quot;
+	style. For list controls in dialogs, including dialogs for CFormView, this
+	style can be set in the dialog editor. If you are using CListView or you
+	are creating list controls using Create, the style can be set in a
+	PreCreateWindow override, as in:</p>
+
+<pre>BOOL CDumpView::PreCreateWindow(CREATESTRUCT&amp; cs) {
+cs.style |= LVS_REPORT;
+return CListView::PreCreateWindow(cs);
+}</pre>
+
+<h2 style="margin-top: 20">Getting a Count of Columns</h2>
+
+<p>The solution for determining the number of columns is not obvious. You must
+	get the header control from the list control and get the number of items
+	(rows) in the header control. So I suggest putting the following in your
+	header:</p>
+
+<pre>CHeaderCtrl *GetHeaderCtrl() const {return (CHeaderCtrl*)GetDlgItem(0);};
+int GetColumnsCount() const {return GetHeaderCtrl()-&gt;GetItemCount();};</pre>
+
+<h2 style="margin-top: 20">Deleting All Columns</h2>
+
+<p>Using GetColumnsCount() from above, it is easy to delete all columns.</p>
+
+<pre>void CListControl::DeleteAllColumns() {
+	int i, n;
+n = GetColumnsCount();
+for (i=0; i&lt;n; ++i)
+	DeleteColumn(0);
+}</pre>
+
+<h2 style="margin-top: 20"> Confusing Terminology</h2>
+<p>Microsoft has made things very confusing because the Platform SDK name for a
+	listbox is &quot;ListBox Control&quot; but MFC programmers usually use
+	&quot;list control&quot; to refer to an instance of the
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListCtrl.asp>
+	CListCtrl</a> class, which is confusing. Also, the MFC class name for a
+	&quot;List View Control&quot; is
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListCtrl.asp>
+	CListCtrl</a>
+	and
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListView.asp>CListView</a>
+	is the view class for it. The MFC class name for a &quot;ListBox Control&quot; is
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListBox.asp>CListBox</a>
+	so we would expect the view class for it to also be CListView except there
+	is not a view class. The following summarizes this.
+	<p style="text-indent: -20; margin-left: 40"><b>Platform SDK name:</b>
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/listboxes/listboxes.asp>List Boxes</a><br>
+	<b>Window class name:</b>
+	ListBox (See under "Predefined Controls" in
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/CommCtls/Common/user.asp>User Controls</a>
+	and the documentation for
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions//CreateWindow.asp>CreateWindow</a> and <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/winui/windowsuserinterface/windowing/windows/windowreference/windowfunctions//CreateWindowEx.asp>CreateWindowEx</a>)<br>
+	<b>MFC class name:</b>  <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListBox.asp>CListBox</a><br>
+	<b>MFC view class name:</b> none</p>
+	<p style="text-indent: -20; margin-left: 40"><b>Platform SDK name:</b> <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/CommCtls/ListView/ListView.asp>ListView Control </a><br>
+	<b>Window class name:</b> SysListView32 (use WC_LISTVIEW in source code instead,
+	which is defined as &quot;SysListView32&quot;)<br>
+	<b>MFC class name:</b>
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListCtrl.asp>CListCtrl</a><br>
+	<b>MFC view class name:</b>
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CListView.asp>CListView</a>
+</p>

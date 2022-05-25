@@ -1,0 +1,255 @@
+@page
+@model sswa.Areas.CPlusPlus.Pages.FlexModel
+@{
+	ViewData["Title"] = "Flex";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p><a href="http://www.gnu.org/software/flex">Flex</a> is a tool that generates 
+	C source code (compatible with the C++ compiler) that are lexical analyzers
+	(scanners). It recognizes syntax, whereas another program, Bison, can be used
+	to generate the semantic analysis portion. When both are used, a lot of work
+	required for writing a compiler is not necessary. Flex can be used for many
+	other purposes as well, not just for compilers. Often we don't need the
+	semantic analysis portion and Flex is enough. Regardless of whether Bison is
+	used, it is worthwhile to learn about Flex. Flex can be used to do things that
+	might be difficult or impossible to do with Regular Expressions. There is an
+	option to generate C++ code from Flex but it is not clear how good that code is.</p>
+<p>There is a lot of material about Flex and Bison available, including books.
+	This page is intended to help with use of the Windows version with
+	Visual Studio. The simple sample I have here works for me using
+	win_flex.exe (Windows Flex) version 2.6.3.</p>
+<p>Flex (&quot;<i>Fast Lex</i>&quot;) is a free version of Lex. Bison is a free
+	version of YACC (&quot;<i>Yet Another Compiler Compiler</i>&quot;). Lex
+	(and especially) YACC are classic tools with many years of use.</p>
+<p>The Windows version of Flex and Bison are available from
+	<a href="https://sourceforge.net/projects/winflexbison">
+	Win flex-bison download | SourceForge.net</a>. Download and unzip using the
+	&quot;Download&quot; button. Once unzipped where you want them to be, see
+	<a href="https://sourceforge.net/p/winflexbison/wiki/Visual%20Studio%20custom%20build%20rules/">
+	Win flex-bison / Wiki / Visual Studio custom build rules</a>.
+	That will save you from many details of getting Flex and Bison set up and
+	working. You might need to sign out of Windows and sign in again. I was
+	getting an error such as &quot;Windows cannot find Winflex.exe&quot; until
+	I signed out and in. After that, when you create a project you will need to
+	add the Custom Build Rules to the project using
+	&quot;Build Dependencies&quot; | &quot;Build Customizations&quot;
+	for the project and checking the checkbox for the rules. Note that
+	Flex and Bison are moving to GitHub but I don&#39;t know where the special
+	Windows versions are in GitHub.</p>
+<p>If you have any Flex and/or Bison files in existing projects prior to
+	installing the Custom Build Rules then add the rules to the project then
+	modify the properties of the file(s). Change the properties of the
+	<strong>files</strong> to set the &quot;Item Type&quot; to
+	&quot;Flex files&quot; or &quot;Bison files&quot; as appropriate.</p>
+
+<h2>Creating a Visual C++ Project</h2>
+<p>The following describes what can be done <strong>instead</strong> of the <strong>Custom Build Rules</strong>. if you the Custom Build Rules then you can skip to the Sample.</p>
+<p>It is possible to set up a VC project to automatically 
+	generate the C or CPP file from Flex. I let's 
+	the Flex input file has a &quot;l&quot; or &quot;lex&quot; (as in <b>l</b>exical) for an 
+	extension and that the output will have a &quot;cpp&quot; extension.</p>
+<p>Don't use precompiled headers unless you know how to use them well 
+	enough to use them for this. I had a problem with it complaining about macro 
+	redefinitions and premature end-of-file, until I turned off use of precompiled 
+	headers.</p>
+<p>Generate a &quot;Win32 Console Application&quot; and make it an empty project (no 
+	generated source code). For example, I am using &quot;SimpleFlex&quot; for my project 
+	name.</p>
+<p><b>Optional:</b> You can customize the Fileview&#39;s folders so that the Flex input file is shown in the Source Files folder. In the properties of the Source Files folder, add the extension (&quot;l&quot; or &quot;lex&quot;) to the list of extensions.</p>
+<p>Then create a file with a &quot;l&quot; (or &quot;lex&quot;) extension for the project; for example, 
+	&quot;SimpleFlex.l&quot;. In the file, use one of the samples from below. Then in the 
+	project settings, create a Custom Build Step. If you are not familiar with 
+	Custom Builds, then look for the &quot;<i>Custom Build Step</i>&quot; tab in the project 
+	settings. Use the following for the Custom Build Step:</p>
+<p style="margin-left: 40px; margin-top: 0; margin-bottom: 0"><b>Description:</b> 
+	Generating lexical analyzer</p>
+<p style="margin-left: 40px; margin-top: 0; margin-bottom: 0"><b>Commands:</b> 
+	C:\Software\FLEX252\flex.exe -o$(ProjDir)\$(InputName).cpp $(InputPath)</p>
+<p style="margin-left: 40px; margin-top: 0"><b>Outputs:</b> 
+	$(ProjDir)\$(InputName).cpp</p>
+<p>Where:</p>
+<dl>
+  <dt>Description</dt>
+  <dd>Is actually anything you want to use</dd>
+  <dt>Commands</dt>
+  <dd>Consists of the path to Flex, the output file and the input file. You will 
+  need to change the path for Flex to whatever is correct for your system. 
+  Otherwise, for a C language scanner, you can use the command as-is. For a C++ 
+  scanner, change the &quot;c&quot; extension to &quot;cpp&quot;.</dd>
+  <dt>Outputs</dt>
+  <dd>Specifies the filename of the output file.</dd>
+</dl>
+<p>After providing the code for the Flex input file creating the Custom Build 
+Step, compile the file. You can use Ctrl-F7 to just compile. Actually, at this 
+point, you can just build the project; there is nothing for the build to do 
+except generate the scanner (the cpp file). The custom build should execute 
+Flex, but the only way you will know it does is because the description is shown 
+in the Build output. The cpp file should have been generated and then it 
+can be added to the project. Now when you build the project, the cpp file 
+should be generated. If you get the errors I describe above (macro redefinitions 
+and premature end-of-file) then turn off precompiled headers for the project.</p>
+
+<h2>Sample</h2>
+<p>This sample will simply change all the vowels (&quot;aeiou&quot;) to a &quot;|&quot;. Create a C++ Win32 console application project. Do <strong>not</strong> create an &quot;Empty project&quot; and <strong>do</strong> use Precompiled Headers. Then:</p>
+<ul>
+	<li>Edit the stdafx.h file and add &quot;#include &lt;iostream&gt;&quot;</li>
+	<li>Add the Custom Build Rules to the project as above (just check the checkbox in the &quot;Build Dependencies&quot; | &quot;Build Customizations...&quot; for the project)</li>
+	<li>Create another C++ file but give it the extension &quot;l&quot; (as in Lex) or &quot;lex&quot;; I suggest using &quot;project.lex&quot; where &quot;project&quot; is the name of your project</li>
+	<li>Provide the code shown below for the &quot;project.lex&quot; or &quot;project.l&quot; file</li>
+	<li>If you used &quot;lex&quot; for the extension then go to the properties for the <strong>file</strong> and change &quot;Item type&quot; to &quot;Flex files&quot;</li>
+	<li>Also in the properties for the file there will be a &quot;Flex files&quot; node in the left; in the &quot;Flex Options&quot; node of &quot;Flex files&quot; you can provide an &quot;Output File Name&quot;; if you use "project.cpp" where &quot;&quot;project&quot; is your project&#39;s name then Flex will replace the file generated by Visual Studio; if you don&#39;t do that the delete the "project.cpp" file or at least comment out the main in that file</li>
+	<li>Compile the file (use Ctrl-F7) but do not build the project yet</li>
+	<li>If you did not specify an &quot;Output File Name&quot; then add the &quot;project.flex.cpp&quot; (the Flex output) to the project</li>
+</ul>
+<h4>project.lex or project.l</h4>
+<pre>%top{
+#include "stdafx.h"
+}
+%%
+[aeiou] fputc('|', yyout);
+%%
+
+int yywrap(void) {
+	return 1;
+}
+
+int main()
+{
+	const char folder[] = &quot;???????????????????";
+	char Buffer[_MAX_PATH];
+	errno_t err;
+	// open input
+	strcpy_s(Buffer, folder);
+	int n = strlen(folder);
+	strcat_s(Buffer, "flexin.txt");
+	std::cout &lt;&lt; "Opening " &lt;&lt; Buffer &lt;&lt; '\n';
+	err = fopen_s(&yyin, Buffer, "r");
+	if (err != 0) {
+		std::cout &lt;&lt; "Error opening input file\n";
+		return 1;
+		}
+	// open output
+	Buffer[n] = 0;
+	strcat_s(Buffer, "flexout.txt");
+	std::cout &lt;&lt; "Opening " &lt;&lt; Buffer &lt;&lt; '\n';
+	err = fopen_s(&yyout, Buffer, "w");
+	if (err != 0) {
+		std::cout &lt;&lt; "Error opening output file\n";
+		return 1;
+	}
+	// Scan
+	int token = yylex();
+	while (token != 0)
+		token = yylex();
+	return 0;
+}</pre>
+<p>Be sure to provide a folder for &quot;folder&quot; (with a trailing &quot;\&quot;) and you will need an input file in the folder.</p>
+<p>When Flex executes, the output file will have the following contents:</p>
+<ul>
+	<li>a #line directive that helps the compiler and debugger refer to the Flex <strong>input</strong> instead of the cpp file generated by Flex</li>
+	<li>#include "stdafx.h"</li>
+	<li>a scanner with the statement &quot;fputc('|', yyout);&quot; in it</li>
+	<li>the &quot;yywrap&quot; and &quot;main&quot; functions with #line directives</li>
+</ul>
+<p>When the generated program executes, &quot;main&quot; will open the input file &quot;flexin.txt&quot; and output file &quot;flexout.txt&quot; and assign the files to yyin and yyout respectively then it calls yylex in a loop. The yyin and yyout files and the yylex function exist in the code generated by Flex. The yywrap function is also used by Flex; it allows use of multiple input files, such as when input data has &quot;include&quot; statements. Since we have only one input file, &quot;yywrap&quot; just returns &quot;1&quot; to indicate &quot;true&quot;. The &quot;%top&quot; block specifies code that must go at the top of the generated file. Our #include will be at the top, preceded only by a &quot;#line&quot; directive.</p>
+<p>The scanning is done by the yylex function. In this sample, the rules section specifies that a &quot;|&quot; is to be written when a vowel is encountered. All other characters will be written as-is.</p>
+
+<h2>Quick Introduction</h2>
+<p>Flex input files consist of three sections, separated by a line containing only &quot;%%&quot;, as in the following:</p>
+<pre>definitions
+%%
+rules
+%%
+user code</pre>
+
+<p>Each of those are optional except a minimum Flex file would be just one line with the two characters &quot;%%&quot;. A minimum file such as that would cause the generated program to just copy &quot;stdin&quot; (the keyboard) to &quot;stdout&quot; (the console window).</p>
+<p>The definitions section can have:</p>
+<ul>
+	<li>an &quot;%options&quot; statement (or statements) to provide options</li>
+	<li>names to be provided for values for use later; they are not required, they just make things more convenient</li>
+	<li>declarations of &quot;start conditions&quot;</li>
+	<li>a &quot;%top&quot; block, as in our example, that provides code that must go at the top of the generated file; multiple &#39;%top&#39; blocks are allowed and their order is preserved</li>
+	<li>C code to be copied as-is to the output program</li>
+</ul>
+<p>Lines beginning with &quot;/*&quot; begin a comment and &quot;*/&quot; ends the comment. Comments are copied as-is to the output. Also, text beginning with whitespace (is indented) is copied as-is to the output. Text beginning after a line with &quot;%{&quot; and up to a line before &quot;%}&quot; is copied as-is to the output. If the text being copied as-is exists in the rules section prior to any rule then it becomes part of the scanning routine and therefore can contain variables and/or code to be executed at the beginnning of the scanning routine.</p>
+<p>The user code section is also copied as-is.</p>
+<p>The rules (also called patterns) section consists of a series of rules of the form:</p>
+<pre>pattern action</pre>
+<p>Where the pattern must be unindented (begin in the first column) and the action must begin on the same line. Patterns are an extended set of regular expressions. Actions are C code to be executed when the corresponding pattern is satisfied. The patterns and actions are the important part of the Flex input. In most articles about Flex most actions are functions that write something out. That however is not what happens when Flex is used with Bison. When Flex is used with Bison, the typical action is a &quot;return&quot; statement that returns a &quot;token&quot; id. The name of the main function generated by Flex is called &quot;yylex&quot;. When Flex is used with Bison, Bison calls &quot;yylex&quot; and when the &quot;return&quot; statement is executed as an action, the return value is returned to Bison.</p>
+<p>You can refer to the documentation and other articles for more.</p>
+
+<h2>Other Syntactic and Semantic Generators</h2>
+<p>The following are other software I have found that are similar to
+	Lex/Flex and YACC/Bison, most generate processors in other languages such as C#.</p>
+<ul>
+	<li><a href="https://github.com/deAtog/gplex">Gardens Point LEX</a> generates a scanner in C#</li>
+	<li><a href="https://github.com/deAtog/gppg">Gardens Point Parser Generator</a> generates a parser in C#</li>
+    <li><a href="http://www.ssw.uni-linz.ac.at/Coco">The Compiler Generator Coco/R</a></li>
+    <li><a href="https://github.com/IronyProject/">Irony</a> a development kit for implementing languages on .NET platform</li>
+    <li><a href="https://www.thefreecountry.com/programming/compilerconstruction.shtml">Free Compiler Construction Tools</a> for others too</li>
+</ul>
+
+<h2>References</h2>
+<h3>Books</h3>
+<p>The following two books might be helpful.</p>
+<table border="1" style="width:100%;" id="AutoNumber1">
+  <tr>
+    <th>ISBN</th>
+    <th>Author</th>
+    <th>Publisher</th>
+    <th>Cost (est.)</th>
+    <th>Title</th>
+  </tr>
+  <tr>
+    <td>9780077092214</td>
+    <td>J. P. Bennett</td>
+    <td>McGraw-Hill</td>
+    <td>$166</td>
+    <td>Introduction to compiling techniques : a first course using ANSI C, LEX, 
+    and YACC</td>
+  </tr>
+  <tr>
+    <td>9780134743967</td>
+    <td>Axel T. Schreiner and H. George Friedman</td>
+    <td>Prentice Hall</td>
+    <td>$47</td>
+    <td>Introduction to Compiler Construction With Unix</td>
+  </tr>
+  <tr>
+    <td>9781565920002</td>
+    <td>Doug Brown, John Levine and Tony Mason</td>
+    <td>O'Reilly</td>
+    <td>$14</td>
+    <td>lex &amp; yacc, 2nd Edition </td>
+  </tr>
+  <tr>
+    <td>9780130830982</td>
+    <td>Per Brinch Hansen</td>
+    <td>Prentice-Hall</td>
+    <td>$166</td>
+    <td>Brinch Hansen on Pascal Compilers</td>
+  </tr>
+</table>
+<p>I have the <i>lex &amp; yacc</i> book from O'Reilly. Even though it is 
+categorized as a &quot;UNIX Programming Tools&quot; book, it has very little that is 
+specific to UNIX. It is nearly all about just Lex and YACC, which are very 
+compatible with Flex and Bison. The book however might not be worth $14. It helps a little but not much.</p>
+    <p>I paid $35 for my copy of Brinch Hansen on Pascal Compilers but it is out of print.
+        The high cost of it is an indication of how valuable it is. Since the title indicates it is
+        about Pascal compilers you would not expect it to be useful for other compilers but
+        many people say it is a very good book about Lex and YACC.</p>
+<h3>Online Tutorials</h3>
+<p>Most (probably all) of the following I found by searching the internet.</p>
+<ul>
+  <li><a href="http://dinosaur.compilertools.net">The LEX &amp; YACC Page</a></li>
+  <li><a href="http://epaperpress.com/lexandyacc/index.html">A Compact Guide to Lex 
+&amp; Yacc</a> in the ePaperPress</li>
+  <li><a href="http://members.tripod.com/~ashimg/Parser.html">How to write a Parser 
+/ translator using Lex /Yacc</a> by Ashim Gupta</li>
+  <li><a href="http://web.eecs.utk.edu/~bvz/teaching/cs461Sp11/notes/flex">Introduction to Flex</a></li>
+    <li><a href="http://www.di-mgt.com.au/flex_and_bison_in_msvc.html">Using flex and bison in MSVC++ </a></li>
+</ul>

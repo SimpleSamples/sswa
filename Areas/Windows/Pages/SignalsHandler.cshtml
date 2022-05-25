@@ -1,0 +1,49 @@
+@page
+@model sswa.Areas.Windows.Pages.SignalsHandlerModel
+@{
+	ViewData["Title"] = "Console Signals Handler";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following is an example of setting a handler for console signals.</p>
+<pre>#define STRICT 1
+#include &lt;windows.h&gt;
+#include &lt;ctime&gt;
+#include &lt;iostream&gt;
+using namespace std;
+
+bool GlobalQuit = false;
+
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
+switch (fdwCtrlType) {
+    case CTRL_C_EVENT:
+        Beep(1000, 1000);
+    case CTRL_CLOSE_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        cout &lt;&lt; &quot;Signal to quit was received\n&quot;;
+        GlobalQuit = true;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+int main(int argc, char *argv[], char *envp[]) {
+    struct tm *today;
+    time_t ltime;
+    char *p;
+SetConsoleCtrlHandler(CtrlHandler, TRUE);
+while (!GlobalQuit) {
+    time(&amp;ltime);
+    today = localtime(&amp;ltime);
+    p = asctime(today);
+    Sleep(2000);
+    }
+return 0;
+}</pre>
+<p>Use GenerateConsoleCtrlEvent to generate a CTRL+C or a CTRL+BREAK signal.</p>

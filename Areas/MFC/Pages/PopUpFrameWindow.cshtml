@@ -1,0 +1,103 @@
+@page
+@model sswa.Areas.MFC.Pages.PopUpFrameWindowModel
+@{
+	ViewData["Title"] = "Pop-Up Frame Window";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This is an  example of creating a frame window
+using MFC that is separate from the MFC main frame and the MFC document/view stuff. 
+The &quot;Without a View&quot; sample is incomplete.</p>
+
+<h2 style="margin-top: 30">With a View</h2>
+
+<p style="margin-top: 30">The following can be used if you want to use a view in 
+the window. 
+Normally there you will have a class derived from a view class. CFormView is a 
+view class and I will assume you have a class called CPopupView derived from a 
+view class.</p>
+<pre style="margin-top: 30">CFrameWnd* pFramePopUp = new CFrameWnd;
+CCreateContext Context;
+Context.m_pNewViewClass = RUNTIME_CLASS(CPopupView);
+if (!pFramePopUp-&gt;LoadFrame(IDR_POPUPFRAME, WS_OVERLAPPEDWINDOW, NULL, &amp;Context)) {
+	AfxMessageBox(&quot;LoadFrame failed&quot;);
+	return FALSE;
+	}
+CString strFullString, strTitle;
+if (strFullString.LoadString(IDR_POPUPFRAME))
+AfxExtractSubString(strTitle, strFullString, CDocTemplate::docName);
+pFramePopUp-&gt;SetTitle(strTitle);
+pFramePopUp-&gt;InitialUpdateFrame(NULL, TRUE);</pre>
+<h2>Without a View</h2>
+<p>If you want to add controls dynamically then the following is one 
+possibility, but when using VC 6 a copy constructor and opertator= must be 
+supplied for the CFramePopUp class and I don't know how to do that.</p>
+<p>First, create a frame window class CFramePopUp derived from <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFrameWnd.asp>CFrameWnd</a>.
+Make the constructor and destructor public. Then put a pointer to a CFramePopUp in the main frame class:</p>
+<pre>CFramePopUp *m_pFramePopUp;</pre>
+
+<p>Create a member variable in the CMainFrame class for the window's class name:</p>
+<pre>CString m_ClassName;</pre>
+<p>In PreCreateWindow of the    CMainFrame class and in the override save the window class name for use
+later:</p>
+<pre>m_ClassName = cs.lpszClass;</pre>
+<p>In the CMainFrame::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.OnCreate.asp>OnCreate</a> 
+use something such as the following (you will want to customize the values for the size and position rectangle):</p>
+<pre>	DWORD Style;
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CRect.asp>CRect</a> Rect;
+	WNDCLASS wndcls;
+SystemParametersInfo(SPI_GETWORKAREA, 0, &amp;Rect, 0);
+Rect.left = lpCreateStruct-&gt;x;
+Rect.top = lpCreateStruct-&gt;y;
+Rect.right = (Rect.right &gt;&gt; 2) + lpCreateStruct-&gt;x;
+Rect.bottom = (Rect.bottom &gt;&gt; 2) + lpCreateStruct-&gt;y;
+m_pFramePopUp = new CFramePopUp;
+Style = WS_POPUPWINDOW|WS_CAPTION|WS_THICKFRAME|WS_VISIBLE;
+Style |= WS_MAXIMIZEBOX|WS_MINIMIZEBOX|WS_CHILD;
+::GetClassInfo(AfxGetInstanceHandle(), m_ClassName, &amp;wndcls);
+const char* pszClassName = <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_AfxRegisterWndClass.asp>AfxRegisterWndClass</a>(wndcls.style);
+if (!m_pFramePopUp-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.CreateEx.asp>CreateEx</a>(0, pszClassName, &quot;Popup Frame&quot;, Style, Rect, this, 0)) {
+	MessageBox(&quot;The Popup Frame window was not created&quot;);
+	return -1;
+	}</pre>
+<p> Notice that using the window class name I get the window class style from
+the main frame window and&nbsp; use it. The CFramePopUp window is separate from the main frame
+because I use the <span style="font-variant: small-caps">WS_POPUPWINDOW</span>
+style (See <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/windows_16b7.asp>Pop-up Windows</a>). It is not necessary to use SystemParametersInfo; I use it to
+calculate a window size and position but you can do it any way you need to. To
+put something in the window, you can create controls in
+CFramePopUp::OnCreate. The following will
+create an edit control in the window:</p>
+<pre>if (!m_EditBox.Create(WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|ES_MULTILINE,
+		<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFrameWnd.asp>CFrameWnd</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFrameWnd.3a3a.rectDefault.asp>rectDefault</a>, this, IDC_STATIC)) {
+	MessageBox(&quot;The edit control was not created&quot;);
+	return -1;
+	}
+m_EditBox.SetWindowText(&quot;This is the edit control;\r\nobviously it was created&quot;);</pre>
+<p>Where m_EditBox is defined as:</p>
+<pre><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CEdit.asp>CEdit</a> m_EditBox;</pre>
+<p>If the following is used in the <span style="font-variant: small-caps">WM_SIZE</span>
+handler (CFramePopUp::OnSize) then the edit control will be resized when the the
+frame window is resized:</p>
+<pre>if (nType==SIZE_RESTORED || nType==SIZE_MAXIMIZED) {
+    m_EditBox.MoveWindow(0, 0, cx, cy);
+    }</pre>
+
+<h2 style="margin-top: 30">Variations</h2>
+<p>Alternatives to the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFrameWnd.asp>CFrameWnd</a>
+class for deriving from are <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.asp>CWnd</a>
+and <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CMiniFrameWnd.asp>CMiniFrameWnd</a>.
+If you use one of them you might get a memory leak if you do not delete the
+object in <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>.
+This is not necessary for <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFrameWnd.asp>CFrameWnd</a>
+because they delete themselves by default. If you create the window object in
+the heap and have no other place to delete it that is more appropriate then you
+can delete it in <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>
+as in the following:</p>
+<pre>void CWndPopUp::PostNcDestroy() {
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.asp>CWnd</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.PostNcDestroy.asp>PostNcDestroy</a>();
+delete this;
+}</pre>

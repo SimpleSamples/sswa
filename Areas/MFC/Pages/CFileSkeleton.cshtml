@@ -1,0 +1,31 @@
+﻿@page
+@model sswa.Areas.MFC.Pages.CFileSkeletonModel
+@{
+	ViewData["Title"] = "CFile";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following is a sample of opening and reading a file using the MFC CFile class.</p>
+
+<pre>	char Buffer[100];
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFile.asp>CFile</a> File;
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFileException.asp>CFileException</a> fe;
+if (!File.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFile.3a3a.Open.asp>Open</a>(pszPathName, CFile::modeRead, &amp;fe)) {
+	fe-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CException.3a3a.ReportError.asp>ReportError</a>();
+	return FALSE;
+	}
+TRY {
+	while (File.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFile.3a3a.Read.asp>Read</a>(&amp;Buffer, sizeof(Buffer))) {
+		// Process data in Buffer
+		}
+	File.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFile.3a3a.Close.asp>Close</a>();
+	}
+CATCH_ALL(e) {
+	File.<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CFile.3a3a.Abort.asp>Abort</a>(); // will not throw an exception
+	e-&gt;<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CException.3a3a.ReportError.asp>ReportError</a>();
+	return FALSE;
+	}
+END_CATCH_ALL</pre>

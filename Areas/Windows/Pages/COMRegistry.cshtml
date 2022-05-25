@@ -1,0 +1,65 @@
+@page
+@model sswa.Areas.Windows.Pages.COMRegistryModel
+@{
+	ViewData["Title"] = "Sample of the Registry Entries for a Simple COM Object";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The following is a sample of some (the most common) of the registry entries
+	for a basic COM Object. See
+	&quot;<a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/reg_9ann.asp">
+	COM Registry Entries</a>&quot; in the documentation. You must provide
+	relevant values for the following:</p> 
+<ul>
+  <li><u>&lt;CLSID>:</u> is a GUID for the class</li>
+  <li><u>&lt;PATH&gt;:</u> is the complete path for the server exe</li>
+</ul>
+ 
+<p>&nbsp;</p>
+ 
+<h3>HKEY_CLASSES_ROOT\SimpleCOM.Application</h3>
+ 
+<Table width="700" border="1">
+<TR><TH width="200">Key</TH><TH width="80">Name</TH><TH>Value</TH></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">(Default)</TD><TD>Simple COM Class</TD></TR>
+<TR><TD width="200">CLSID</TD><TD width="80">(Default)</TD><TD>{&lt;CLSID>}</TD></TR>
+<TR><TD width="200">CurVer</TD><TD width="80">(Default)</TD><TD>SimpleCOM.Application.1</TD></TR>
+</Table>
+ 
+<h3>HKEY_CLASSES_ROOT\CLSID\{&lt;CLSID>}</h3>
+ 
+<p>Note that the AppID is used only for DCOM.</p>
+ 
+<Table width="700" border="1">
+<TR><TH width="200">Key</TH><TH width="80">Name</TH><TH width="450">Value</TH></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">(Default)</TD><TD width="450">Simple COM
+    Class</TD></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">AppID</TD><TD width="450">Simple COM
+    Application</TD></TR>
+<TR><TD width="200">LocalServer32</TD><TD width="80">(Default)</TD><TD width="450">&lt;PATH&gt;\COMNETSERVER.EXE</TD></TR>
+<TR><TD width="200">ProgId</TD><TD width="80">(Default)</TD><TD width="450">SimpleCOM.Application.1</TD></TR>
+<TR><TD width="200">VersionIndependentProgID</TD><TD width="80">(Default)</TD><TD width="450">SimpleCOM.Application</TD></TR>
+</Table>
+ 
+<h3>HKEY_CLASSES_ROOT\SimpleCOM.Application.01</h3>
+ 
+<Table width="700" border="1">
+<TR><TH width="200">Key</TH><TH width="80">Name</TH><TH>Value</TH></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">(Default)</TD><TD>Beta Version of Simple COM
+    Class</TD></TR>
+<TR><TD width="200">CLSID</TD><TD width="80">(Default)</TD><TD>{&lt;CLSID>}</TD></TR>
+</Table>
+ 
+<h3>HKEY_CLASSES_ROOT\CLSID\{&lt;CLSID>}</h3>
+ 
+<Table width="700" border="1">
+<TR><TH width="200">Key</TH><TH width="80">Name</TH><TH>Value</TH></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">(Default)</TD><TD>Simple COM Class</TD></TR>
+<TR><TD width="200">&nbsp;</TD><TD width="80">AppID</TD><TD>Simple COM Application</TD></TR>
+<TR><TD width="200">LocalServer32</TD><TD width="80">(Default)</TD><TD>&lt;PATH&gt;\COMNETSERVER.EXE</TD></TR>
+<TR><TD width="200">ProgId</TD><TD width="80">(Default)</TD><TD>SimpleCOM.Application.1</TD></TR>
+<TR><TD width="200">VersionIndependentProgID</TD><TD width="80">(Default)</TD><TD>SimpleCOM.Application</TD></TR>
+</Table>

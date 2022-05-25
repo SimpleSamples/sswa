@@ -1,0 +1,35 @@
+@page
+@model sswa.Areas.Windows.Pages.PostThreadMessageModel
+@{
+	ViewData["Title"] = "PostThreadMessage to Console Application";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The <a href="<%= href_ptm %>">PostThreadMessage</a>
+documentation is not clear about whether a message can be sent to a different
+process. I thought that the documentation was just incomplete, but I tried
+sending a <a href="<%= href_ptm %>">PostThreadMessage</a> to a console application.
+I nearly gave up, then finally got it working. The following&nbsp; shows how it 
+is used:</p>
+<pre><a href="<%= href_ptm %>">PostThreadMessage</a>(idThread, WM_COMMAND, (WPARAM)0, (LPARAM)0));</pre>
+<p>Some programmers might think that we can't send a message to a console 
+program because there is no message loop. Well we can create a message loop in a 
+console program. It is possible to show a window in a console program. We don't 
+need to create a window though if we use 
+<a href="<%= href_ptm %>">PostThreadMessage</a>
+to send the message. 
+<a href="<%= href_ptm %>">PostThreadMessage</a>
+uses a thread id, not a window handle.</p>
+<p><a href="PostThreadMessage.cpp">PostThreadMessage.cpp</a> (and
+<a href="PostThreadMessage.h">stdafx.h</a>) is a sample that can be used
+to verify that it is possible and it provides the basics for doing it yourself. 
+The program will:</p>
+	<ul>
+		<li>If there is no argument for it, call itself (passing its thread id) 
+		then wait for the new process to send messages</li>
+		<li>If there is an argument then it will assume the argument is a thread 
+		id and send a message to that thread followed by a WM_QUIT</li>
+	</ul>

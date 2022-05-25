@@ -1,0 +1,162 @@
+@page
+@model sswa.Areas.Windows.Pages.TaskbarStatusIconModel
+@{
+	ViewData["Title"] = "Taskbar Status Area Icons";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>Applications usually have a window that has an icon in the
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a>,
+but the following is an explanation of the conditions in which a window does or does not
+have an icon in the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a>.
+The remainder of this page describes how to put an icon in the status area of the 
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a>.</p>
+
+<p>Any window with the <small>WS_VISIBLE</small> style bit off is hidden and not shown in
+the taskbar. Otherwise if a window has the <small>WS_EX_APPWINDOW</small> extended style,
+the taskbar shows a button for the window and if it has the <small>WS_EX_TOOLWINDOW</small>
+extended style, the taskbar does not show a button for the window. A window should not
+have both of these extended styles. If a visible window has neither of these extended
+styles, a button is shown in the taskbar if the window is not owned and not shown if the
+window is owned.</p>
+
+<p>To put an icon in the <em>Status Area</em> of the <em>Taskbar</em> (often called the <em>System
+Tray</em>), use <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/functions/Shell_NotifyIcon.asp>Shell_NotifyIcon</a>.
+See <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a> for a description of the <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a>,
+including the Status area.</p>
+
+<h2 style="margin-top: 40">Other Articles and Samples</h2>
+
+<p>I show a sample below of adding an icon to the in the status area of the
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/programmersguide/shell_int/shell_int_programming/Taskbar.asp>Taskbar</a>, but the following articles are also relevant.</p>
+
+<ul>
+  <li>Paul DiLascia's CTrayIcon in his
+  <a href="http://www.dilascia.com/PixieLib.htm">PixieLib MFC C++ Class Library</a></li>
+  <li>The <a href="http://www.microsoft.com/msj/archive/SDBE.aspx">C/C++ Q &amp; A</a>
+    article in the March 1996 edition of the MSJ</li>
+  <li>The <a href="http://www.microsoft.com/msj/0299/c/c0299.aspx">Q &amp; A C++</a>
+    article in the February 1999 edition of the MSJ</li>
+  <!--li>The Platform SDK <a href="http://msdn.microsoft.com/library/devprods/vs6/visualc/vcsample/vcsmptraynot.htm">TrayNot
+    Sample</a>.</li-->
+  <li>The CodeGuru <a href="http://www.codeguru.com/win32/tasktrayframework.shtml">Win32:
+    Task Tray Applet Framework</a> article.</li>
+  <li>The following CodeProject articles:
+<ul>
+  <li><a href="http://www.codeproject.com/shell/cjbtaskbarapplet.asp">A Task Tray Applet Framework</a></li>
+  <li><a href="http://www.codeproject.com/shell/systemtray.asp">Adding Icons to the System Tray</a></li>
+</ul>
+  </li>
+  <li>PJ Naughter's <a href="http://www.naughter.com/ntray.html">
+  Freeware MFC class to manipulate tray icons</a></li>
+  <!--li>Bob Moore's Win32 Code Tips
+  <a href="http://www.mooremvp.freeserve.co.uk/Win32/w32tip1.htm">How
+    do I put an icon in the system tray?</a></li-->
+  <!--li><a href="http://www.mctainsh.com/Win32/ToolTrayIcon.aspx">VisualC Ideas - Creating an icon in the tool
+    tray</a></li-->
+  <li>The following MS KB articles are relevant to Taskbar Status Area Icons:
+<ul>
+  <li><a href="http://support.microsoft.com/support/kb/articles/q135/7/88.asp">PRB:
+    Menus for Notification Icons Do Not Work Correctly</a></li>
+  <!--li><a href="http://support.microsoft.com/support/kb/articles/Q244/6/51.ASP">HOWTO:
+    Creating a Shell Notification Icon from a Windows NT Service</a></li-->
+  <li> <a href="http://support.microsoft.com/support/kb/articles/q139/4/08.asp">How to Use OLE Drag &amp; Drop from the Taskbar Notification Area</a>
+    (I am not sure whether this is relevant)</li>
+</ul>
+  </li>
+</ul>
+
+<h2>My sample</h2>
+
+<p>In an MFC SDI or MDI application, you could put the following in the header of your 
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>-derived class:</p>
+
+<pre><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/structures/NOTIFYICONDATA.asp>NOTIFYICONDATA</a> m_NotifyIconData;</pre>
+
+<p>Then in your InitInstnace:</p>
+
+<pre>m_NotifyIconData.cbSize = sizeof m_NotifyIconData;
+m_NotifyIconData.hWnd = <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinThread.3a3a.m_pMainWnd.asp>m_pMainWnd</a>-&gt;m_hWnd;
+m_NotifyIconData.uID = 1;
+m_NotifyIconData.uFlags = NIF_ICON|NIF_TIP;
+m_NotifyIconData.hIcon = <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.LoadIcon.asp>LoadIcon</a>(IDR_MAINFRAME);
+strcpy(m_NotifyIconData.szTip, <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_AfxGetAppName.asp>AfxGetAppName</a>());
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/functions/Shell_NotifyIcon.asp>Shell_NotifyIcon</a>(NIM_ADD, &amp;m_NotifyIconData);</pre>
+
+<p>And in your ExitInstnace you <strong>must</strong> remove the icon:</p>
+
+<pre>m_NotifyIconData.uFlags = 0;
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/functions/Shell_NotifyIcon.asp>Shell_NotifyIcon</a>(NIM_DELETE, &amp;m_NotifyIconData);</pre>
+
+<p>You will probably want to also use the <small>WS_EX_TOOLWINDOW</small> extended style
+for your main window. A window with <small>WS_EX_TOOLWINDOW</small> extended style does
+not appear in the Taskbar (the part of the Taskbar that most applications appear in). If
+you give a window the <small>WS_EX_TOOLWINDOW</small> extended style and do not use
+Shell_NotifyIcon to put it in the Status Area of the Taskbar, then an icon for the window
+does not appear in either the &quot;Taskbar Buttons&quot; or the &quot;Status Area&quot;
+of the Taskbar. Notice, though, that a window with <small>the WS_EX_TOOLWINDOW</small>
+extended style has a few differences from other windows; they do not have menu bars,
+system menus or minimize or maximize buttons, and there does not seem to be a way to get
+Windows to create any of those for them.</p>
+
+<p>You might want to use CMiniFrameWnd instead of CFrameWnd for the main frame for your
+application. It appears that CMiniFrameWnd uses the <small>WS_EX_TOOLWINDOW</small>
+extended style by default.</p>
+
+<h3 style="border: thin solid" align="center">Mouse Events</h3>
+
+<p>Unfortunately, that is not enough. The icon in the status area just sits there. If you
+minimize your application then it is not easy to get it back up. The
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/structures/NOTIFYICONDATA.asp>NOTIFYICONDATA</a> structure provides the opportunity to
+specify a message id for mouse events for the icon.
+It seems to be a necessity to process the mouse events. You can use either an
+application-defined message id (see <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_4soi.asp>WM_USER</a>) or you
+can use a registered message id; I prefer registered messages.
+See <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/messques_6nn7.asp>Application-Defined Messages</a> for a description of both types of message ids.</p>
+
+<p>So assuming you are using a registered message id, at the beginning of the cpp files
+for both your CWinApp-derived class and your CMainFrame-derived class put:</p>
+
+<pre>static UINT NEAR WM_YOURTRAYCALLBACKMESSAGE =
+    RegisterWindowMessage(&quot;YourTrayCallbackMessage&quot;);</pre>
+
+<p>Then in your InitInstance add the NIF_MESSAGE flag and add a line to set the message id
+in the&nbsp; <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/structures/NOTIFYICONDATA.asp>NOTIFYICONDATA</a> structure, as in:</p>
+
+<pre>m_NotifyIconData.uFlags = NIF_ICON|NIF_TIP|NIF_MESSAGE;
+m_NotifyIconData.uCallbackMessage = WM_YOURTRAYCALLBACKMESSAGE;</pre>
+
+<p>Then in your CMainFrame-derived class add a message-map entry for processing the
+registered message:</p>
+
+<pre>BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
+    //{{AFX_MSG_MAP(CMainFrame)
+    ON_WM_CREATE()
+    //}}AFX_MSG_MAP
+    ON_REGISTERED_MESSAGE(WM_YOURTRAYCALLBACKMESSAGE, OnTrayCallbackMessage)
+END_MESSAGE_MAP()</pre>
+
+<p>The following is a sample function for processing the mouse events; it is just the
+basics:</p>
+
+<pre>afx_msg LRESULT CMainFrame::OnTrayCallbackMessage(WPARAM wParam, LPARAM lParam) {
+UINT uID = (UINT) wParam;
+UINT uMouseMsg = (UINT) lParam;
+if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_RBUTTONDOWN)
+    ActivateFrame();
+return 0;
+}</pre>
+
+<p>You will also need to add an entry in your CMainFrame-derived class header file's
+message map:</p>
+
+<pre>// Generated message map functions
+protected:
+    //{{AFX_MSG(CMainFrame)
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    //}}AFX_MSG
+    afx_msg LRESULT OnTrayCallbackMessage(WPARAM, LPARAM);
+    DECLARE_MESSAGE_MAP()</pre>

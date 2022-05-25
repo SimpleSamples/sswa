@@ -1,0 +1,90 @@
+@page
+@model sswa.Areas.MFC.Pages.IdleProcessingModel
+@{
+	ViewData["Title"] = "Idle-time Processing";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The default MFC processing for <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.OnIdle.asp>OnIdle</a>
+is to return TRUE if lCount is zero and return FALSE otherwise.
+This means that it gets called when the value is zero or one but after that
+it is not called again until after there is another message. Try overriding
+<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.OnIdle.asp>OnIdle</a> and use something such as the following:</p>
+<pre>BOOL COnIdleApp::OnIdle(LONG lCount) {
+TRACE1(&quot;%i OnIdle\n&quot;, lCount);
+if (lCount == 0)
+	return <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.OnIdle.asp>OnIdle</a>(lCount);
+if (lCount == 1) {
+	<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.asp>CWinApp</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWinApp.3a3a.OnIdle.asp>OnIdle</a>(lCount);
+	return 1;
+	}
+if (lCount &lt; 9)
+	return 1;
+return 0;
+}</pre>
+<p>Unless a modal dialog is being shown, you should  see the count go from 0 to 9 many times but it will not go above 9.</p>
+<p>So a possible practical use of OnIdle could be:</p>
+<pre>BOOL CMyApp::OnIdle(LONG lCount) {
+if (CWinApp::OnIdle(lCount)) // MFC have more work?
+	return 1; // Give MFC a chance to finish first
+return DoIdleWork(); // Do our application's idle processing.
+}</pre>
+
+<h3>References</h3>
+<p>The following is not a complete list of material about idle processing
+but it is some.</p>
+<dir>
+  <li><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/HTML/_core_idle_loop_processing.asp>Idle Loop Processing</a>
+  does not describe the OnIdle solution much but it does describe a couple of
+  alternatives that use PeekMessage in a message loop.</li>
+</dir>
+
+<h2>Use the <span style="font-variant: small-caps">WM_KICKIDLE</span>
+ Message for Modal Dialogs</h2>
+<p>The <span style="font-variant: small-caps">WM_IDLE</span> message will not be
+processed for modal dialogs; that is, when a DoModal is executing. There is,
+however, a MFC &quot;private&quot; message that is somewhat documented. It is
+the the <span style="font-variant: small-caps">WM_KICKIDLE</span>
+message.&nbsp; You must add an entry to the message map for the dialog class header. Add it
+outside of the ClassWizard-managed portion, as in the following:</p>
+<pre>// Generated message map functions
+//{{AFX_MSG(CDialogsDlg)
+//}}AFX_MSG
+afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
+DECLARE_MESSAGE_MAP()</pre>
+<p>You must also include afxpriv.h somewhere; either in you dialog's &quot;.cpp&quot;
+file or in your &quot;stdafx.h&quot; file. You must also add an entry to the
+message map for the dialog class implementation too. Add it outside of the
+ClassWizard-managed portion, as in the following:</p>
+<pre>BEGIN_MESSAGE_MAP(CDialogsDlg, CDialog)
+//{{AFX_MSG_MAP(CDialogsDlg)
+//}}AFX_MSG_MAP
+ON_MESSAGE(WM_KICKIDLE, OnKickIdle)
+END_MESSAGE_MAP()</pre>
+<p>Then you can handle the <span style="font-variant: small-caps">WM_KICKIDLE</span>
+message in a manner similar to the handling of the <span style="font-variant: small-caps">WM_IDLE</span>
+message, as in the following:&nbsp;</p>
+  <pre style="background-color: #E1E1E1">LRESULT CDialogsDlg::OnKickIdle(WPARAM, LPARAM lCount) {
+// Do processing similar to processing for the <span style="font-variant: small-caps">WM_IDLE</span> message
+}</pre>
+<p>Except LPARAM is the idle count corresponding to
+the idle count for <span style="font-variant: small-caps">WM_IDLE</span>. Return TRUE/FALSE
+to continue/discontinue idle processing.</p>
+<h3>References</h3>
+<p>The following is about everything that Microsoft has to say about <span style="font-variant: small-caps">WM_KICKIDLE</span>.
+The sample code above is a simpler version of one of these.</p>
+<ul>
+	<li><a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.asp>CWnd</a>::<a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vcmfc98/html/_mfc_CWnd.3a3a.RunModalLoop.asp>RunModalLoop</a></li>
+	<li><a href="http://www.microsoft.com/msj/archive/S13EC.aspx">MSJ
+		June 1996 C/C++ Q&amp;A</a> (The last question asks about idle processing in 
+		modal dialogs and the answer is to the <span style="font-variant: small-caps">
+		WM_KICKIDLE</span><font size="2"> message.</font>)</li>
+	<li><a href="http://www.microsoft.com/msj/0797/c0797.aspx">MSJ
+		July 1997 C/C++ Q&amp;A</a> (The last question asks how to change the tab order 
+		of controls in a dialog box and the answer includes a description of the
+		<span style="font-variant: small-caps">WM_KICKIDLE</span><font size="2"> 
+		message</font>.)</li>
+</ul>

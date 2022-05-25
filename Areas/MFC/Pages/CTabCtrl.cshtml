@@ -1,0 +1,245 @@
+@page
+@model sswa.Areas.MFC.Pages.CTabCtrlModel
+@{
+	ViewData["Title"] = "Creating Tab Controls Using CTabCtrl";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>I have seen many questions  asking how to
+use tab controls without CPropertySheet and CPropertyPage. I have also been
+seeing questions asking how to use modeless dialogs as child dialogs without
+using tab controls. I think that the solution for the first can also show the
+solution for the second, so this article will explain how to create a tab
+control containing modeless dialogs using MFC. This sample will show how to put 
+a CTabCtrl derived class into an application using CFormView
+for a view. The solution would be very similar for dialogs.</p>
+<p>I have two sample solutions. The first one is a MFC version of the Platform SDK solution in <a href=http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/CommCtls/Tab/Tab.asp>Tab Control</a>. 
+The alternative is a better solution that I have developed. The advantage of my 
+alternative is that the dialogs for the tabs are not created each time the tab 
+is shown.</p>
+<h2>Creating the Control and Dialogs</h2>
+<p>The first few things to do is to create a:</p>
+<ul>
+  <li>Tab control in your dialog</li>
+  <li>Class for the tab control (I called mine CTabbyControl)</li>
+  <li>Dialog for each of the tabs</li>
+  <li>Class for each tab's dialog</li>
+</ul>
+<p>This is done the same regardless of which of the two solutions you choose.</p>
+<p>After creating a class derived from CTabCtrl (CTabbyControl or whatever), use 
+ClassWizard to create a &quot;Control&quot; Category member variable and for the &quot;Variable 
+Type&quot; select CTabbyControl (or
+whatever your CTabCtrl derived class is). I called my member variable m_ctlTabControl.</p>
+<p>Each of the tab's dialogs should have the
+dialog style set to &quot;Child&quot; and the &quot;Title Bar&quot; style should 
+be unchecked (no title bar).</p>
+<p>Since each tab's dialog will be modeless, it is <b>
+necessary</b> to override CDialog::OnOK and CDialog::OnCancel, as described in 
+the documentation; therefore it is necessary to create a class for each tab's 
+dialog. Normally, tab controls do not have &quot;Ok&quot; and &quot;Cancel&quot; buttons in their 
+tabs, but without the buttons in the dialogs, it might be difficult to use the 
+ClassWizard to add handlers for IDOK (OnOK) and IDCANCEL (OnCancel). So before 
+deleting the buttons, add the handlers for them first. If you have already 
+delete the buttons, then you can add them temporarily, add the handlers, then 
+delete the buttons.</p>
+<h2>First Solution</h2>
+<p>Each of the tab's dialogs should have the &quot;Visible&quot; style checked (shown by 
+default).</p>
+<p>In the CTabCtrl derived class create a member variable for the modeless
+dialog that currently exists in the tab control (which varies based on which tab 
+is selected). Then create the following member variables:</p>
+<table border="1" cellspacing="3" id="AutoNumber1" style="border-collapse: collapse; margin-left: 20; margin-right: 20" bordercolor="#111111" cellpadding="0">
+  <tr>
+    <th width="300">Member Variable</th>
+    <th width="547">Description</th>
+  </tr>
+  <tr>
+    <td width="300">
+    <p style="margin-left: 20">int m_DialogResourceId[2];</td>
+    <td width="547">an array of dialog control ids; one element for each dialog 
+    template that corresponds to each tab</td>
+  </tr>
+  <tr>
+    <td width="300">
+    <p style="margin-left: 20">CRect m_ClientRect;</td>
+    <td width="547">to store the size of the contents</td>
+  </tr>
+  <tr>
+    <td width="300">
+    <p style="margin-left: 20">CDialog m_Dialog;</td>
+    <td width="547">the current dialog for the (one and only) selected tab</td>
+  </tr>
+</table>
+<p>Then in the CTabCtrl derived class's constructor initialize the array of 
+dialog control ids, as in
+the following:</p>
+<pre>m_DialogResourceId[0] = IDD_DIALOG1;
+m_DialogResourceId[1] = IDD_DIALOG2;</pre>
+<p>Add a member function to the CTabCtrl derived class to create a modeless
+dialog to be the content for each tab; I called mine &quot;CreateContents&quot;.
+This member function will be called once for each tab's dialog. Use something such as the following:</p>
+<pre>void CTabbyControl::CreateContents() {
+	int CurSel = GetCurSel();
+if (m_Dialog.m_hWnd)
+	m_Dialog.DestroyWindow();
+if (!m_Dialog.Create(m_DialogResourceId[CurSel], GetParent()))
+	TRACE0(&quot;Dialog not created\n&quot;);
+m_Dialog.MoveWindow(m_ClientRect);
+GetParent()-&gt;RedrawWindow();
+}</pre>
+<p>The tabs can be created in PreSubclassWindow for a tab control in a CFormView 
+view or in OnInitDialog for a tab control in a dialog using something as in the 
+following::</p>
+<pre>	TC_ITEM TabCtrlItem;
+	CRect WindowRect;
+// Call base class PreSubclassWindow or OnInitDialog here
+TabCtrlItem.mask = TCIF_TEXT;
+TabCtrlItem.pszText = &quot;Tab 1&quot;;
+if (InsertItem(0, &amp;TabCtrlItem)==-1)
+	MessageBox(&quot;InsertItem 0 failed&quot;);
+TabCtrlItem.pszText = &quot;Tab 2&quot;;
+if (InsertItem(1, &amp;TabCtrlItem)==-1)
+	MessageBox(&quot;InsertItem 1 failed&quot;);
+// Determine the size of the area for the contents
+GetClientRect(&amp;m_ClientRect);
+AdjustRect(FALSE, &amp;m_ClientRect);
+// Determine the offset within the view's client area
+GetWindowRect(&amp;WindowRect);
+GetParent()-&gt;ScreenToClient(WindowRect);
+m_ClientRect.OffsetRect(WindowRect.left, WindowRect.top);
+// Complete the initialization
+SetCurSel(0);
+CreateContents();	// creates the first tab</pre>
+<p>Finally, add a handler to the CTabCtrl derived class for the TCN_SELCHANGE
+notification message as a reflected message. In the handler, call CreateContents.</p>
+
+<h2>Alternative Solution</h2>
+
+<p>In this solution, the dialogs for each tab are 
+created initially and then simply disabled/enabled and shown/hidden as needed. 
+I have provided a sample project with this solution implemented for a dialog. I 
+have used the name &quot;CTabby&quot; for my class derived from CTabCtrl.</p>
+
+<p>The relevant member variables of&nbsp; the CTabby class are:</p>
+
+<table border="1" cellpadding="0" cellspacing="1" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber3">
+  <tr>
+    <th width="20%">Type</th>
+    <th width="20%">Name</th>
+    <th width="60%">Description</th>
+  </tr>
+  <tr><td>CWnd*</td><td>m_Parent</td><td>Pointer to parent (the dialog), for 
+    efficiency only</td></tr>
+  <tr><td>int</td><td>m_PreviousTab</td><td>When switching tabs, the previous 
+    tab (the tab being switched from)</td></tr>
+  <tr><td>CTabOneDialog<br>
+    CTabTwoDialog</td><td>m_TabOneDialog<br>
+    m_TabTwoDialog</td><td>The tab's dialogs (usually one for each tab)</td></tr>
+  <tr><td>CDialog</td><td>*m_pDialogs[2]</td><td>Array of pointers to dialogs 
+    to allow access using the tab index (number)</td></tr>
+  <tr><td>int</td><td>m_MaxWidth</td><td>Maximum width of dialogs put into the 
+    tab control</td></tr>
+  <tr><td>int</td><td>m_MaxHeight</td><td>Maximum height of dialogs put into 
+    the tab control</td></tr>
+  </table>
+
+<p>Be sure to initialize m_pDialogs and m_PreviousTab in the constructor. Set 
+each element of m_pDialogs to a pointer to the corresponding dialog.</p>
+<p>Then the following will create the tabs. This can be done in a member 
+function of the CTabCtrl derived class. The member function can be a function 
+you create and call from a form's OnInitialUpdate or a dialog's OnInitDialog. 
+For dialogs, the following code can be done in an override of PreSubclassWindow.</p>
+<pre>	CRect DisplayArea;
+	int i, n;
+// Call base-class function here if relevant
+m_Parent = GetParent();
+if (InsertItem(0, &quot;First&quot;)==-1)
+	MessageBox(&quot;InsertItem 0 failed&quot;);
+if (InsertItem(1, &quot;Second&quot;)==-1)
+	MessageBox(&quot;InsertItem 1 failed&quot;);
+// The first tab's dialog's properties should include visible and enabled
+if (!CreateTab(m_pDialogs[0], IDD_DIALOG1))
+	MessageBox(&quot;The First Dialog was not created&quot;);
+// The other tab's dialog's properties should include hidden and disabled
+if (!CreateTab(m_pDialogs[1], IDD_DIALOG2))
+	MessageBox(&quot;The Second Dialog was not created&quot;);
+SetCurSel(0);
+// get our position and size
+// GetWindowRect receives the screen coordinates of the corners.
+GetWindowRect(&amp;DisplayArea);
+m_Parent-&gt;ScreenToClient(&amp;DisplayArea); // to our parent's coordinates
+AdjustRect(FALSE, &amp;DisplayArea); // Get current display area
+DisplayArea.right = m_MaxWidth + DisplayArea.left;
+DisplayArea.bottom = m_MaxHeight + DisplayArea.top;
+AdjustRect(TRUE, &amp;DisplayArea);
+MoveWindow(&amp;DisplayArea); // resize ourself
+AdjustRect(FALSE, &amp;DisplayArea);
+for (i=0,n=(sizeof m_pDialogs/sizeof m_pDialogs[0]);i&lt;n;++i)
+	m_pDialogs[i]-&gt;MoveWindow(DisplayArea.left, DisplayArea.top,
+		DisplayArea.Width(), DisplayArea.Height(), FALSE);</pre>
+<p>Note that each of the tab's dialogs should have the &quot;Visible&quot; style 
+unchecked (hidden by default) and the Disabled style checked (disabled by 
+default), except for the first dialog, which should be set to the opposite 
+(shown and enabled by default).</p>
+
+<p>The first thing done is to set m_Parent to the tab contro's parent, which should be the dialog or view that contains the tab 
+control. This is only for efficiency. Then each of the tabs are inserted. Then the CreateTab 
+member function is called to create each of the dialogs for the tabs. The <b>parent</b> of each tab dialog must be the same parent as the 
+<b>tab 
+control's</b>. The maximum width and height are determined for later use (see 
+above).</p>
+<p>The CreateTab member function calls the Create member function for the 
+dialog to create a modeless dialog, but it also determines the width and height 
+of the dialog and retains the maximum for all the dialogs. Note that  the 
+<b>tab control's parent</b> (the dialog containing the tab control) is uses for the parent 
+of each dialog in the tab control. <b>The tab control is not the parent!</b></p>
+<p>The parameters for CreateTab are:</p>
+<ul>
+  <li><u>pDlg:</u> a pointer to the dialog for the tab</li>
+  <li><u>nId:</u> dialog id of the dialog</li>
+</ul>
+
+<p>After CreateTab has been called to create a modeless dialog for each tab, the 
+tab control and the dialogs for it are resized. GetWindowRect and ScreenToClient 
+are used to get the current position and size of the tab control. Then 
+CTabCtrl::AdjustRect is used to determine the current <b>position</b> of the tab 
+control <i>display rectangle</i>, also known as the <i>display area</i>. This is 
+the area that does not include the tab buttons and is the area typically used 
+for the tab contents. We need to know the position so that we can use it when we 
+call CTabCtrl::AdjustRect for the new size. We then set the new display area 
+size by setting the right side and bottom of the display area. Then we use 
+MoveWindow to resize ourselves (note that MoveWindow's size and position is 
+relative to our parent). Then we call CTabCtrl::AdjustRect one more time (I 
+think this is not necessary; I will attempt to simplify) to convert the tab 
+control's position and size back to the position and size of the display area. 
+Finally, each of the tab control's tab dialogs are resized.</p>
+
+<h3>CreateTab</h3>
+<pre>BOOL CTabby::CreateTab(CDialog *pDlg, UINT nId) {
+CRect WindowRect;
+int tw, th;
+if (!pDlg-&gt;Create(nId, m_Parent))
+	return FALSE;
+pDlg-&gt;GetWindowRect(&amp;WindowRect);
+tw = WindowRect.Width();
+m_MaxWidth = tw &lt; m_MaxWidth ? m_MaxWidth : tw;
+th = WindowRect.Height();
+m_MaxHeight = th &lt; m_MaxHeight ? m_MaxHeight : th;
+return TRUE;
+}</pre>
+<p>The TCN_SELCHANGE notification message handler would be something such as:</p>
+<pre>if (m_PreviousTab == GetCurSel())
+	return;
+m_pDialogs[m_PreviousTab]-&gt;EnableWindow(FALSE);
+m_pDialogs[m_PreviousTab]-&gt;ShowWindow(SW_HIDE);
+m_PreviousTab = GetCurSel();
+m_pDialogs[m_PreviousTab]-&gt;EnableWindow(TRUE);
+m_pDialogs[m_PreviousTab]-&gt;ShowWindow(SW_SHOW);</pre>
+<h3>Additional Notes</h3>
+<p>If you need to retrieve data each time a dialog is switched to and/or store 
+	data each time a dialog is switched from, then the
+<span style="font-variant: small-caps">WM_ENABLE</span> message can be very 
+	useful.</p>

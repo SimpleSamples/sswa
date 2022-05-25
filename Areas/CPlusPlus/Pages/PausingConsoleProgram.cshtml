@@ -1,0 +1,33 @@
+@page
+@model sswa.Areas.CPlusPlus.Pages.PausingConsoleProgramModel
+@{
+	ViewData["Title"] = "Pausing a Console Program";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>Microsoft has finally fixed the way console programs are debugged so now
+	this is not needed.</p>
+<p>I often saw questions asking how to pause a console program being debugged. 
+	Previous versions of Visual Studio paused a console program being
+	executed within Visual Studio but without the debugger. That is different
+	from the behavior when the program is executed somewhere else, such as
+	from Windows Explorer and from "Run" in the Start Menu. Visual Studio does
+	automatically pause a console program when the program is being debugged.
+	So we usually needed to do something separate to pause a console program
+	being debugged so we can see the results.</p>
+<p>What I usually do is to put a breakpoint on the last line of main, or 
+	somewhere like that.</p>
+<p>Often the suggestion is to use system("pause") or cin.get(). Since 
+	that will <strong>always</strong> cause the program to pause even if the 
+	program is not being debugged, it can be slightly irritating. We certainly 
+	do not want to leave that in a production program. A good solution is to
+	use the IsDebuggerPresent function in combination with cin.get() to
+	determine if the console program is being debugged. The following is a
+	simple sample of how it can be used.</p>
+<pre>if (IsDebuggerPresent()) {
+	std::cout &lt;&lt; "Press Enter to continue ...\n";
+	std::cin.get();
+	}</pre>

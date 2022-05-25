@@ -1,0 +1,67 @@
+@page
+@model sswa.Areas.Data.Pages.CreatingHierarchicallyRecursiveTableModel
+@{
+	ViewData["Title"] = "Creating a Hierarchically Recursive Table";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>A hierarchically recursive (self-referencing) table is a table where parent 
+and child objects are all in the same table. Typically a foreign key in the 
+table is an association with the same table's primary key. Examples are the 
+directories in a file system, organizational charts and the parts structure of 
+something. I will show how to create a hierarchically recursive table in SQL 
+Server in Visual Studio. I assume the procedure is the same using SQL Server 
+outside of Visual Studio.</p>
+<p>Open the SQL Server Object Explorer in Visual Studio. You can get to it 
+using the View menu or Ctrl+\ + Ctrl-S. I will assume you know what server 
+and database to use. Expand the node for the server then expand the node for 
+the database. To create a table, right-click on "Tables" for the database 
+and select "Add New Table ...". You will have a table as in the following:</p>
+<p><a href="~/images/EmptyTable.jpg">
+<img alt="Empty table" height="168" width="400" 
+	longdesc="Empty table in SQL Server Object Explorer in Visual Studio"
+	src="~/images/EmptyTable.jpg"></a></p>
+<p>&nbsp;</p>
+<p>Note that there is already a field with the name "Id" that is specified as 
+being the primary key. That is good, except it is useful to let SQL Server 
+generate a new value for it. That is optional, but if you want to do that then 
+add "IDENTITY (0, 1)" after the data type (int) and before "NOT NULL".</p>
+<p>In hierarchically recursive data, there must be at least one item at the top 
+of the hierarchy. The convention is to set the value of the field pointing to 
+the parent ("OfId" here) to null. I prefer to not allow nulls unless the data is 
+optional and this field is not optional. I will use zero for the "OfId" field to 
+indicate there are no parents. Therefore we will need at least one record (row) 
+with a zero for the "Id" filed. Note that I am using zero for the seed 
+(starting) value in "IDENTITY (0, 1)".</p>
+<p>Add a field that will be the foreign key to specify the parent of the item. I 
+called it "OfId", as in the item is the child of its parent item. Change the 
+Data Type to "int"; it must be the same as the "Id" field. Uncheck the checkbox 
+for "Allow Nulls". Set the default to zero, so enter "((0))" in the default 
+column.</p>
+<p>Next we can create any other fields we need. For this, I am creating a 
+hierarchy of categories, so I am creating a fielded for "Category". You can do 
+whatever you need to.</p>
+<p>Now to create the foreign key. In the right side right-click on the "Foreign 
+Key" node then select "Add New Foreign Key". Call it "fkCategoriesId". Then 
+right-click on the foreign key and select "Properties". In the properties expand 
+the node for "Table and Column Specifications". Set the "Foreign Key Base"
+<strong>and</strong> the "Referenced Table" to whatever you will be calling the 
+table; I am using "Categories". Set the Foreign Key Columns to "OfId" or 
+whatever name you used to specify the parent item. Set the Referenced Columns to 
+"Id" or whatever the primary key is. You should have the following SQL:</p>
+<pre>CREATE TABLE [dbo].[Table]
+(
+[Id] INT IDENTITY (0, 1) NOT NULL PRIMARY KEY, 
+[OfId] INT NOT NULL DEFAULT ((0)), 
+[Category] NCHAR(10) NOT NULL, 
+CONSTRAINT [fkCategoriesId] FOREIGN KEY ([OfId]) REFERENCES [dbo].[Categories] ([Id])
+)</pre>
+<p>The SQL Server Object Explorer window will look like:</p>
+<p>
+<a href="~/images/FinalSQL.jpg">
+<img alt="Final SQL" height="107" height="471"
+	longdesc="Final SQL in the SQL Server Object Explorer window"
+	src="~/images/FinalSQL.jpg"></a></p>
