@@ -1,0 +1,161 @@
+@page
+@model sswa.Areas.Miscellaneous.Pages.RetrievingHierarchicallyRecursiveDataIterativelyModel
+@{
+	ViewData["Title"] = "Retrieving Hierarchically Recursive Data Iteratively";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>The sample code provided for this is C# but the concepts are relevant to 
+any language. I hope the sample code is understandable enough even if you 
+are not familiar with C#.</p>
+<p>Many objects are recursive hierarchies (you can say, like the root system 
+of a tree where roots have roots). The directories of a file system are 
+recursive hierarchies since a directory can contain one or more 
+subdirectories that can also contain one or more subdirectories. Windows of 
+a GUI are recursive hierarchies since a window can contain client windows or 
+controls (which are windows) that can contain controls or other windows. 
+Engineering and manufacturing parts lists (such as for refrigerators and 
+spacecraft) are recursive hierarchies. Organizational structures (employees) 
+are recursive hierarchies.</p>
+<p>Recursively hierarchical data can be retrieved and processed recursively. 
+For each parent item, such as a directory or a window, the function 
+processing the structure can call itself for each child. It is very easy to 
+design a way to retrieve hierarchical data recursively.</p>
+<p>I have always wanted to process hierarchical data iteratively instead of 
+recursively. Now that I have done it, I am surprised how easy it is. I won't 
+explain the advantages and disadvantages of either. The purpose of this 
+article is to explain how to iteratively process recursively hierarchical 
+data with an example.</p>
+<p>When processing data recursively, recursion uses a stack. Each time a 
+function is called (recursively or not), the data for the calling function 
+is pushed onto the stack. For a recursive call, part of that data is usually 
+the parent item, such as the directory or window.</p>
+<p>The trick to processing data iteratively (not recursively) is to simply 
+use a ("to do") stack for the data thas has not yet been processed but needs 
+to be processed. During the processing of a parent 
+item, the children (that are then to be done) are stacked (using a Last-In-First-Out (LIFO) 
+collection). The .Net Stack class can be used for that. Objects are pushed 
+onto the stack and popped off the stack until all data is processed. The 
+data is processed in reverse, in the sense that if "1", 2"", "3" and "4" 
+pushed onto the stack in that order, they are processed as "4", "3", "2" and 
+"1".</p>
+<p>Let us use the following data as an example.</p>
+<div style="margin-left: 40px;">
+	<ul>
+		<li>Top<ul>
+			<li>First<ul>
+				<li>First-1<ul>
+					<li>John</li>
+					<li>Mike</li>
+					<li>Steve</li>
+				</ul>
+				</li>
+				<li>First-2<ul>
+					<li>Susan</li>
+					<li>Julie</li>
+					<li>Kara</li>
+				</ul>
+				</li>
+				<li>First-3<ul>
+					<li>Kim</li>
+					<li>Kelly</li>
+					<li>Pat</li>
+				</ul>
+				</li>
+			</ul>
+			</li>
+			<li>Second<ul>
+				<li>Second-1 </li>
+				<li>Second-2 </li>
+				<li>Second-3 </li>
+			</ul>
+			</li>
+		</ul>
+		</li>
+	</ul>
+</div>
+<p>When processing the data iteratively, the stack would be as follows, one 
+line per iteration:</p>
+<pre>Top
+First Second 
+First-1 First-2 First-3 Second 
+John Mike Steve First-2 First-3 Second 
+Mike Steve First-2 First-3 Second 
+Steve First-2 First-3 Second 
+First-2 First-3 Second 
+Susan Julie Kara First-3 Second 
+Julie Kara First-3 Second 
+Kara First-3 Second 
+First-3 Second 
+Kim Kelly Pat Second 
+Kelly Pat Second 
+Pat Second 
+Second 
+Second-1 Second-2 Second-3 
+Second-2 Second-3 
+Second-3 
+</pre>
+<p>In other words, we begin by pushing "Top" onto the stack. We then iterate 
+(loop) by popping that off the stack and processing it. Processing includes 
+pushing the children onto the stack. So the iteration continues until there 
+are no more children to be processed; in other words, there is nothing more 
+to process. Note that, as each item is processed, it is effectively replaced 
+by its children, if any.</p>
+<p>The sample program processes items of a class called "Hierarchy" that 
+consists of:</p>
+<pre>class Hierarchy
+{
+	public string Name;
+	public List<hierarchy> Children = new List<hierarchy>();
+	public Hierarchy Parent = null;
+	
+	public Hierarchy(string Name, Hierarchy Parent)
+	{
+		this.Name = Name;
+		this.Parent = Parent;
+	}
+}</pre>
+	<p>The stack of items to be processed could then be:</p>
+	<pre>Stack&lt;Hierarchy&gt; ToDo = new Stack&lt;Hierarchy&gt;();</pre>
+	<p>The data could be processed iteratively using:</p>
+	<pre>ToDo.Push(Top);
+while (ToDo.Count &gt; 0)
+{
+	Hierarchy h = ToDo.Pop();
+	Put(h, ToDo);
+}
+</pre>
+	<p>Where the following is the "Put" method:</p>
+	<pre>private void Put(Hierarchy h, Stack<hierarchy> ToDo)
+{
+	string tabs = new string('\t', Level);
+	Console.WriteLine("{0}{1}", tabs, h.Name);
+	// store the children in the to do stack
+	if (h.Children == null)
+		return;
+	// since the stack is LIFO, the objects will be popped off in
+	// reverse order from what they are pushed, so we will push
+	// in reverse order 
+	for (int i = h.Children.Count - 1; i &gt;= 0; --i)
+		ToDo.Push(h.Children[i]);
+}</pre>
+	<p>See the sample code to see how "Level" is determined.</p>
+	<p>The following is an equivalent method for processing the data 
+	recursively:</p>
+	<pre>private static void PutRecursively(Hierarchy h)
+{
+	string tabs = new string('\t', Level);
+	Console.WriteLine("{0}{1}", tabs, h.Name);
+	// store the children in the to do stack
+	if (h.Children == null)
+		return;
+	foreach (Hierarchy child in h.Children)
+		PutRecursively(child);
+}
+</pre>
+<p>See <a href="../CSharp/ProcessingFoldersIteratively.aspx">
+Processing Folders Iteratively</a> for a C# sample of how 
+this can be done.</p>

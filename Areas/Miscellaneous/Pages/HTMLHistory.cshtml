@@ -1,0 +1,57 @@
+@page
+@model sswa.Areas.Miscellaneous.Pages.HTMLHistoryModel
+@{
+	ViewData["Title"] = "HTML's Surprising History";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>This article provides some surprising information about HTML's ancestry 
+that few people are aware of. Most people know that, until version 5 of 
+HTML, HTML is an application of the Standard Generalized Markup Language 
+(SGML). This article is actually a history of SGML.</p>
+<p>Script/VS commands provide the details of <strong>how</strong> something 
+is done and the GML macros specifed <strong>what</strong> is to be done.</p>
+<h2>Standard Generalized Markup Language (SGML)</h2>
+<p>You might however be unsure of what SGML is. SGML can be defined as a 
+markup language for <strong>documents</strong>. So what is a markup 
+language? I will get to that soon. SGML is ISO standard 8879. </p>
+<p>SGML's parent is IBM's Generalized Markup Language (GML) developed by 
+Charles Goldfarb, Edward Mosher, and Raymond Lorie. Although Charles 
+Goldfarb helped develop IBM's GML, he also participated in the development 
+of the SGML standard and wrote the book "The SGML Handbook". IBM called 
+their software the Generalized Markup Language but actually it is not a 
+language. So why did they call it a language? I will get to that soon. IBM's 
+GML is (was) a part of their SCRIPT/VS word processing software.</p>
+<p>The parent of IBM's GML is SCRIPT/VS. SCRIPT/VS is an IBM Mainframe word 
+processing system. SCRIPT/VS documents were edited in a batch format in the 
+sense that they were not edited interactively. What you edited was not what 
+you would see. You would execute the SCRIPT/VS word processor to create a 
+final document. The equiavlent for HTML is a parser; SCRIPT/VS was like a 
+parser that took in an unformatted document and created a formatted 
+document. GML was originally developed to provide many of the features that 
+the original HTML does.</p>
+<p>SCRIPT/VS includes a macro language. IBM's GML is a set of macros for 
+SCRIPT/VS. The GML macros made it easier to do things like making lists, 
+much like lists (such as the HTML OL tag) in HTML. Something else that GML 
+was designed to do is to make it easy to format a document for various 
+devices, and this is something that HTML alone does not do. CSS has been 
+added to HTML to satisfy that requirement but CSS was not part of the 
+original HTML and I think CSS does not do it as well as IBM's GML does. 
+Using GML it was possible to format a document for a screen then later 
+format a document for a printer then later create a different format for the 
+same printer or a different printer and the details of the formatting was in 
+GML; it was generaly easy to generate a variety of formats. To the extent 
+that this capability exists for HTML using CSS, it took the HTML people a 
+long time to get there whereas it was explicitly built into IBM's GML before 
+the internet existed.</p>
+<p>What did GML of IBM's GML first stand for? I did indicate that GML stands 
+for Generalized Markup Language and that is IBM's official name for it, but 
+originally it was named for Goldfarb, Mosher and Lorie (its developers). 
+When IBM wanted to adopt GML as an official part of SCRIPT/VS they needed to 
+come up with an official name. So they called it Generalized Markup Language 
+but it is actually a set of macros, it is not a language.</p>
+<h2>References</h2>
+<p><a href="http://www.sgmlsource.com/8879/">Current Text ofISO 8879 (SGML)</a></p>

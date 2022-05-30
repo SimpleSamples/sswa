@@ -1,0 +1,114 @@
+@page
+@model sswa.Areas.Miscellaneous.Pages.CGIModel
+@{
+	ViewData["Title"] = "CGI";
+}
+
+<div class="text-center">
+<h1 class="display-4">@ViewData["Title"]</h1>
+</div>
+
+<p>There are a couple of things that are necessary to know about to get a CGI 
+program to work in a Windows environment. First I will say that I am assuming 
+you know the basics about CGI; that is, that CGI programs read from standard 
+input and write to standard output. I can write a little introduction but the 
+basics are available elsewhere so for now I will write a bit about what I have 
+discovered that is not documented as well. To learn about CGI, one good place to 
+go  is <a href="http://www.w3.org/CGI">CGI - Common Gateway Interface</a> in The World Wide Web Consortium web site. In 
+particular you are likely to want to look at the C language sample programs in 
+the
+<a href="ftp://ftp.ncsa.uiuc.edu/Web/httpd/Unix/ncsa_httpd/cgi/cgi-src">cgi-src</a> 
+directory of the NCSA FTP site.</p>
+<p>The most important thing to know  is that for reading data from standard input 
+it is probably not possible to detect the end of file using functions for that 
+purpose. They might work in some environments but seem to not work for a Windows 
+environment. It seems necessary to use the CONTENT_LENGTH Environment Variable to 
+determine how much data to read and then read exactly that much data. If an 
+attempt to read more data is made then the program will try to wait (block) for 
+more data which will cause the program to actually hang. For advanced CGI 
+programs it might be correct to expect more data but unless you know what you 
+are doing it probably will not work. Notice that the sample programs in the NCSA 
+FTP site use the CONTENT_LENGTH Environment Variable to determine how much data 
+to read.</p>
+<p>The next thing to know is that the functions we usually use for standard 
+input seem to not work. What I mean are the C Runtime Library functions (such as 
+gets()) and the C++ STL classes (such as cin). The problem with most of them is 
+that they require a CrLf delimiter at the end of the data and/or more data to be 
+available than is requested.</p>
+<p>The following code will probably help. I hope it saves you time; 
+you still might need to play with it but hopefully it will require less time 
+than it took for me to figure things out. The GetData function will use the 
+CONTENT_LENGTH Environment Variable (if it exists) to determine how much data to 
+read. It will also support reading from other types of files that would probably 
+not exist in most CGI environments. This is so that you can test your CGI 
+program as a console program without a server. You can use redirected input 
+instead of posted form data. You will probably need a way to capture sample data 
+for testing purposes and that is something else I might add later.</p>
+<p>Sample use of the GetData function is:</p>
+<pre>	DWORD dwSize;
+	char *Data;
+dwSize = GetData(&amp;Data);
+if (dwSize)
+	cout &lt;&lt; Data &lt;&lt; endl;
+else
+	cout &lt;&lt; &quot;No Data\n&quot;;
+delete [] Data;</pre>
+<p>The function is:</p>
+<pre>DWORD GetData(char **pBuffer) {
+	DWORD FileType, FileSizeHigh, dwSize;
+	HANDLE StdIn;
+	char *Temp;
+StdIn = GetStdHandle(STD_INPUT_HANDLE);
+FileType = GetFileType(StdIn);
+dwSize = ((Temp=getenv(&quot;CONTENT_LENGTH&quot;)) ? (atoi(Temp)) : 0);
+if (!dwSize)
+	if (FileType != FILE_TYPE_DISK &amp;&amp; FileType != FILE_TYPE_CHAR) {
+		*pBuffer = NULL;
+		return 0;
+		}
+else {
+	dwSize = GetFileSize(StdIn, &amp;FileSizeHigh);
+	if (!dwSize || FileSizeHigh || FileSizeHigh == 0xFFFFFFFF) {
+		// Either no data, too big or there's an error
+		*pBuffer = NULL;
+		return 0;
+		}
+}
+*pBuffer = new char[dwSize+1];
+ReadFile(StdIn, *pBuffer, dwSize, &amp;dwSize, NULL);
+(*pBuffer)[dwSize] = 0;
+return dwSize;
+}</pre>
+<h2>Revised Information</h2>
+<p>I have learned more since I wrote the above. I have now figured out how to 
+use the STL to get the posted form data. I now know that cin::read can be used 
+to read the data. The following is a revised GetData function.</p>
+<pre>DWORD GetData(char **pBuffer) {
+	char *ContentLength;
+	DWORD dwSize;
+ContentLength = getenv(&quot;CONTENT_LENGTH&quot;);
+if (!ContentLength) {
+	cout &lt;&lt; &quot;No CONTENT_LENGTH environment variable\n&quot;;
+	*pBuffer = NULL;
+	return 0;
+	}
+dwSize = atoi(ContentLength);
+if (!dwSize) {
+	*pBuffer = NULL;
+	return 0;
+	}
+*pBuffer = new char[dwSize+1];
+cin.read(*pBuffer, dwSize);
+(*pBuffer)[dwSize] = 0;
+return dwSize;
+}</pre>
+<p>Sample use of the GetData function:</p>
+<pre>char *Data;
+DWORD dwSize;
+dwSize = GetData(&amp;Data);
+if (!dwSize || !Data) {
+	cout &lt;&lt; &quot;No Data\n&quot;;
+	return 16;
+	}
+cout &lt;&lt; '\n' &lt;&lt; dwSize &lt;&lt; &quot; bytes of form data\n&quot;;
+delete [] Data;</pre>

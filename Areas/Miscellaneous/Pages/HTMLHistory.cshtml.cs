@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace sswa.Areas.Internet.Pages
+namespace sswa.Areas.Miscellaneous.Pages
 {
-    public class IndexModel : PageModel
+    public class HTMLHistoryModel : PageModel
     {
         public void OnGet()
         {
